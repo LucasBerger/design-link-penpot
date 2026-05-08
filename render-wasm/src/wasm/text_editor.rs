@@ -2,6 +2,7 @@ use macros::{wasm_error, ToJs};
 
 use crate::globals::{get_render_state, get_text_editor_state};
 use crate::math::{Matrix, Point, Rect};
+use crate::mem;
 use crate::render::text_editor as text_editor_render;
 use crate::render::SurfaceId;
 use crate::shapes::{Shape, TextAlign, TextContent, TextPositionWithAffinity, Type, VerticalAlign};
