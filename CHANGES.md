@@ -123,6 +123,7 @@
 - Fix plugin parse-point returning plain map instead of Point record (by @FairyPigDev) [Github #9129](https://github.com/penpot/penpot/pull/9129)
 - Fix `:heigth` typo in clipboard frame-same-size? (by @iot2edge) [Github #9250](https://github.com/penpot/penpot/pull/9250)
 - Fix Settings and Notifications "Update Settings" button enabled state when form has no changes (by @moorsecopers99) [Github #9090](https://github.com/penpot/penpot/issues/9090)
+- Fix editing a legacy text element silently detaches its color token [Taiga #13958](https://tree.taiga.io/project/penpot/issue/13958)
 
 ## 2.15.0 (Unreleased)
 
