@@ -1641,7 +1641,14 @@ impl RenderState {
     }
 
     fn rebuild_backbuffer_crop_cache(&mut self, tree: ShapesPoolRef) {
-        self.backbuffer_crop_cache.clear();
+        let capture_scale = self.get_scale();
+        // Only preserve crops when zoom hasn't changed since the last full-quality frame.
+        // If zoom changed, the backbuffer->doc mapping differs, so we discard old crops.
+        let mut previous_cache = if self.zoom_changed() {
+            HashMap::new()
+        } else {
+            std::mem::take(&mut self.backbuffer_crop_cache)
+        };
 
         // Collect candidate shapes that are "recortable" and visible in the current viewport.
         // This is intentionally conservative; we only cache shapes that do not overlap with
@@ -1692,14 +1699,32 @@ impl RenderState {
         }
 
         // Snapshot from Backbuffer for each accepted shape.
-        let scale = self.get_scale();
         let vb_left = self.viewbox.area.left;
         let vb_top = self.viewbox.area.top;
         for (id, doc_bounds, selrect) in non_overlapping {
-            let left = ((doc_bounds.left - vb_left) * scale).floor() as i32;
-            let top = ((doc_bounds.top - vb_top) * scale).floor() as i32;
-            let right = ((doc_bounds.right - vb_left) * scale).ceil() as i32;
-            let bottom = ((doc_bounds.bottom - vb_top) * scale).ceil() as i32;
+            let fits_viewport_at_capture = doc_bounds.left >= viewport.left
+                && doc_bounds.top >= viewport.top
+                && doc_bounds.right <= viewport.right
+                && doc_bounds.bottom <= viewport.bottom;
+
+            // When the shape no longer fits entirely in the viewport, a fresh backbuffer snapshot
+            // would be clipped / incomplete. Keep the last fully-contained crop for this id (same
+            // scale) so interactive drag can still reuse pixels until a new full snapshot fits.
+            if !fits_viewport_at_capture {
+                if let Some(prev) = previous_cache.remove(&id) {
+                    if prev.fits_viewport_at_capture {
+                        self.backbuffer_crop_cache.insert(id, prev);
+                        continue;
+                    }
+                }
+            } else {
+                previous_cache.remove(&id);
+            }
+
+            let left = ((doc_bounds.left - vb_left) * capture_scale).floor() as i32;
+            let top = ((doc_bounds.top - vb_top) * capture_scale).floor() as i32;
+            let right = ((doc_bounds.right - vb_left) * capture_scale).ceil() as i32;
+            let bottom = ((doc_bounds.bottom - vb_top) * capture_scale).ceil() as i32;
             if right <= left || bottom <= top {
                 continue;
             }
@@ -1712,15 +1737,11 @@ impl RenderState {
             };
 
             let src_doc_bounds = Rect::new(
-                src_irect.left as f32 / scale + vb_left,
-                src_irect.top as f32 / scale + vb_top,
-                src_irect.right as f32 / scale + vb_left,
-                src_irect.bottom as f32 / scale + vb_top,
+                src_irect.left as f32 / capture_scale + vb_left,
+                src_irect.top as f32 / capture_scale + vb_top,
+                src_irect.right as f32 / capture_scale + vb_left,
+                src_irect.bottom as f32 / capture_scale + vb_top,
             );
-            let fits_viewport_at_capture = doc_bounds.left >= viewport.left
-                && doc_bounds.top >= viewport.top
-                && doc_bounds.right <= viewport.right
-                && doc_bounds.bottom <= viewport.bottom;
             self.backbuffer_crop_cache.insert(
                 id,
                 InteractiveDragCrop {
@@ -3056,6 +3077,22 @@ impl RenderState {
                         let y = (doc_top + translation.1) * scale;
                         canvas.draw_image(crop_image, (x, y), Some(&skia::Paint::default()));
 
+                        canvas.restore();
+                        // Debug: draw the crop bounds (doc-space rect) in the same tile-pixel
+                        // coordinate system as the cached blit above.
+                        canvas.save();
+                        canvas.reset_matrix();
+                        let rect = skia::Rect::from_ltrb(
+                            (crop.src_doc_bounds.left + translation.0) * scale,
+                            (crop.src_doc_bounds.top + translation.1) * scale,
+                            (crop.src_doc_bounds.right + translation.0) * scale,
+                            (crop.src_doc_bounds.bottom + translation.1) * scale,
+                        );
+                        let mut paint = skia::Paint::default();
+                        paint.set_style(skia::PaintStyle::Stroke);
+                        paint.set_stroke_width(1.0);
+                        paint.set_color(skia::Color::RED);
+                        canvas.draw_rect(rect, &paint);
                         canvas.restore();
                     }
                     continue;
