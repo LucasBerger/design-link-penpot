@@ -5,7 +5,10 @@ use crate::{get_gpu_state, performance};
 
 use skia_safe::{self as skia, IRect, Paint, RRect};
 
-use super::{gpu_state::GpuState, tiles::Tile, tiles::TileViewbox, tiles::TILE_SIZE};
+use super::{
+    gpu_state::GpuState,
+    tiles::{self, Tile, TileViewbox, TILE_SIZE},
+};
 
 use base64::{engine::general_purpose, Engine as _};
 use std::collections::{HashMap, HashSet};
@@ -982,6 +985,89 @@ impl Surfaces {
 
     pub fn has_cached_tile_surface(&self, tile: Tile) -> bool {
         self.tiles.has(tile)
+    }
+
+    /// Returns true when every tile that intersects `doc_rect` has a cached tile texture.
+    /// Used to decide whether an `InteractiveDragCrop` snapshot can be rebuilt from the atlas.
+    pub fn cached_tiles_cover_doc_rect(&self, doc_rect: skia::Rect, scale: f32) -> bool {
+        if doc_rect.is_empty() {
+            return false;
+        }
+        let tile_size = tiles::get_tile_size(scale);
+        let tr = tiles::get_tiles_for_rect(doc_rect, tile_size);
+        for ty in tr.y1()..=tr.y2() {
+            for tx in tr.x1()..=tr.x2() {
+                if !self.has_cached_tile_surface(Tile(tx, ty)) {
+                    return false;
+                }
+            }
+        }
+        true
+    }
+
+    /// Whether the persistent atlas currently allocates pixels for the full `doc_rect`.
+    pub fn atlas_covers_doc_rect(&self, doc_rect: skia::Rect) -> bool {
+        if doc_rect.is_empty() || !self.has_atlas() {
+            return false;
+        }
+        let s = self.atlas_scale.max(0.01);
+        let al = self.atlas_origin.x;
+        let at = self.atlas_origin.y;
+        let ar = al + self.atlas_size.width as f32 / s;
+        let ab = at + self.atlas_size.height as f32 / s;
+        doc_rect.left >= al && doc_rect.top >= at && doc_rect.right <= ar && doc_rect.bottom <= ab
+    }
+
+    /// Rasterizes `src_doc_bounds` from the atlas into a new image of `out_w`×`out_h` pixels,
+    /// resampling as needed. Caller must ensure tiles and atlas already cover `src_doc_bounds`.
+    pub fn try_snapshot_doc_rect_from_atlas(
+        &mut self,
+        src_doc_bounds: skia::Rect,
+        out_w: i32,
+        out_h: i32,
+    ) -> Option<skia::Image> {
+        if out_w <= 0 || out_h <= 0 || src_doc_bounds.is_empty() {
+            return None;
+        }
+        // Guard against pathological allocations (extrect can be huge off-screen).
+        const MAX_DIM: i32 = 8192;
+        if out_w > MAX_DIM || out_h > MAX_DIM {
+            return None;
+        }
+        if !self.has_atlas() {
+            return None;
+        }
+
+        let gpu_state = get_gpu_state();
+        let mut surface = gpu_state
+            .create_surface_with_isize(
+                "drag_crop_atlas_snap".to_string(),
+                skia::ISize::new(out_w, out_h),
+            )
+            .ok()?;
+
+        let atlas_image = self.atlas.image_snapshot();
+        let a_scale = self.atlas_scale.max(0.01);
+        let sx = (src_doc_bounds.left - self.atlas_origin.x) * a_scale;
+        let sy = (src_doc_bounds.top - self.atlas_origin.y) * a_scale;
+        let sw = src_doc_bounds.width() * a_scale;
+        let sh = src_doc_bounds.height() * a_scale;
+        if sw <= 0.0 || sh <= 0.0 {
+            return None;
+        }
+        let src = skia::Rect::from_xywh(sx, sy, sw, sh);
+        let dst = skia::Rect::from_xywh(0.0, 0.0, out_w as f32, out_h as f32);
+
+        let canvas = surface.canvas();
+        canvas.clear(skia::Color::TRANSPARENT);
+        canvas.draw_image_rect(
+            &atlas_image,
+            Some((&src, skia::canvas::SrcRectConstraint::Fast)),
+            dst,
+            &skia::Paint::default(),
+        );
+
+        Some(surface.image_snapshot())
     }
 
     pub fn remove_cached_tile_surface(&mut self, tile: Tile) {

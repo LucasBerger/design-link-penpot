@@ -381,7 +381,7 @@ pub(crate) struct RenderState {
     /// interactive backdrop exactly once per gesture (first rAF) so we don't
     /// repeatedly overwrite tiles that have already been updated.
     pub interactive_target_seeded: bool,
-    /// GPU crops from `Backbuffer` keyed by shape id. Filled on full-frame completion; during
+    /// GPU crops from `Backbuffer` or tile atlas keyed by shape id. Filled on full-frame completion; during
     /// drag, entries for the moved top-level selection are ensured here
     pub backbuffer_crop_cache: HashMap<Uuid, InteractiveDragCrop>,
 }
@@ -389,9 +389,11 @@ pub(crate) struct RenderState {
 pub struct InteractiveDragCrop {
     pub src_doc_bounds: Rect,
     pub src_selrect: Rect,
-    /// True if the captured crop bounds were fully inside the viewport at capture time.
-    /// Used to avoid serving partial/offscreen crops during interactive drag.
-    pub fits_viewport_at_capture: bool,
+    /// True when the snapshot includes the full shape `doc_bounds` without clipping
+    /// missing regions: either the crop came from the viewport backbuffer with bounds
+    /// fully inside the viewbox, or it was rebuilt from the tile atlas with every
+    /// intersecting tile cached and atlas storage covering the rect.
+    pub full_bounds_in_capture_source: bool,
     /// Viewbox origin (doc-space) at capture time.
     pub capture_vb_left: f32,
     pub capture_vb_top: f32,
@@ -415,6 +417,17 @@ pub fn get_cache_size(viewbox: Viewbox, scale: f32, interest: i32) -> skia::ISiz
         ((iey - isy).abs() + dy) * tile_size as i32,
     )
         .into()
+}
+
+/// Document-space axis-aligned bounds covering every tile in the viewbox interest ring.
+fn interest_area_doc_rect(interest: &TileRect, scale: f32) -> skia::Rect {
+    let ts = tiles::get_tile_size(scale);
+    skia::Rect::from_ltrb(
+        interest.x1() as f32 * ts,
+        interest.y1() as f32 * ts,
+        (interest.x2() as f32 + 1.0) * ts,
+        (interest.y2() as f32 + 1.0) * ts,
+    )
 }
 
 impl RenderState {
@@ -461,12 +474,12 @@ impl RenderState {
             let Some(crop) = self.backbuffer_crop_cache.get(&node_id) else {
                 return false;
             };
-            if !crop.fits_viewport_at_capture {
+            if !crop.full_bounds_in_capture_source {
                 return false;
             }
 
-            // Additionally require this node to be safe to serve from a rectangular backbuffer
-            // crop while moving; otherwise it must be rendered live (e.g. text, overflow frames).
+            // Additionally require this node to be safe to serve from a rectangular GPU
+            // crop (backbuffer or atlas snapshot) while moving; otherwise it must be rendered live (e.g. text, overflow frames).
             return tree
                 .get(&node_id)
                 .is_some_and(|s| s.is_safe_for_drag_crop_cache(tree));
@@ -1643,11 +1656,15 @@ impl RenderState {
     fn rebuild_backbuffer_crop_cache(&mut self, tree: ShapesPoolRef) {
         self.backbuffer_crop_cache.clear();
 
-        // Collect candidate shapes that are "recortable" and visible in the current viewport.
+        let viewport = self.viewbox.area;
+        let scale = self.get_scale();
+        let interest_doc = interest_area_doc_rect(&self.tile_viewbox.interest_rect, scale);
+
+        // Collect candidate shapes that are "recortable" and intersect the tile-viewbox
+        // interest ring (pre-render margin), not only the visible viewport.
         // This is intentionally conservative; we only cache shapes that do not overlap with
         // ANY other candidate to guarantee the pixels under their bounds belong exclusively
-        // to that shape in Backbuffer.
-        let viewport = self.viewbox.area;
+        // to that shape in the snapshot source (backbuffer or tile atlas).
         let mut candidates: Vec<(Uuid, Rect, Rect)> = Vec::new(); // (id, doc_bounds, selrect)
 
         let root_ids: Vec<Uuid> = match tree.get(&Uuid::nil()) {
@@ -1664,13 +1681,12 @@ impl RenderState {
             }
 
             let doc_bounds = self.get_cached_extrect(shape, tree, 1.0);
-            if !doc_bounds.intersects(viewport) {
+            if !doc_bounds.intersects(interest_doc) {
                 continue;
             }
 
-            // Also require selrect to be visible; used for drag delta placement.
             let selrect = shape.selrect();
-            if !selrect.intersects(viewport) {
+            if !selrect.intersects(interest_doc) {
                 continue;
             }
 
@@ -1691,10 +1707,10 @@ impl RenderState {
             non_overlapping.push((*id, *bounds, *selrect));
         }
 
-        // Snapshot from Backbuffer for each accepted shape.
-        let scale = self.get_scale();
         let vb_left = self.viewbox.area.left;
         let vb_top = self.viewbox.area.top;
+        let (bb_w, bb_h) = self.surfaces.surface_size(SurfaceId::Backbuffer);
+
         for (id, doc_bounds, selrect) in non_overlapping {
             let left = ((doc_bounds.left - vb_left) * scale).floor() as i32;
             let top = ((doc_bounds.top - vb_top) * scale).floor() as i32;
@@ -1704,12 +1720,10 @@ impl RenderState {
                 continue;
             }
             let src_irect = skia::IRect::new(left, top, right, bottom);
-            let Some(image) = self
-                .surfaces
-                .snapshot_rect(SurfaceId::Backbuffer, src_irect)
-            else {
-                continue;
-            };
+            let in_backbuffer = src_irect.left >= 0
+                && src_irect.top >= 0
+                && src_irect.right <= bb_w
+                && src_irect.bottom <= bb_h;
 
             let src_doc_bounds = Rect::new(
                 src_irect.left as f32 / scale + vb_left,
@@ -1717,16 +1731,42 @@ impl RenderState {
                 src_irect.right as f32 / scale + vb_left,
                 src_irect.bottom as f32 / scale + vb_top,
             );
-            let fits_viewport_at_capture = doc_bounds.left >= viewport.left
-                && doc_bounds.top >= viewport.top
-                && doc_bounds.right <= viewport.right
-                && doc_bounds.bottom <= viewport.bottom;
+
+            let backbuffer_snap = if in_backbuffer {
+                self.surfaces
+                    .snapshot_rect(SurfaceId::Backbuffer, src_irect)
+            } else {
+                None
+            };
+
+            let (image, full_bounds_in_capture_source) =
+                if let Some(img) = backbuffer_snap {
+                    let full = doc_bounds.left >= viewport.left
+                        && doc_bounds.top >= viewport.top
+                        && doc_bounds.right <= viewport.right
+                        && doc_bounds.bottom <= viewport.bottom;
+                    (img, full)
+                } else if self.surfaces.cached_tiles_cover_doc_rect(src_doc_bounds, scale)
+                    && self.surfaces.atlas_covers_doc_rect(src_doc_bounds)
+                {
+                    let Some(img) = self.surfaces.try_snapshot_doc_rect_from_atlas(
+                        src_doc_bounds,
+                        src_irect.width(),
+                        src_irect.height(),
+                    ) else {
+                        continue;
+                    };
+                    (img, true)
+                } else {
+                    continue;
+                };
+
             self.backbuffer_crop_cache.insert(
                 id,
                 InteractiveDragCrop {
                     src_doc_bounds,
                     src_selrect: selrect,
-                    fits_viewport_at_capture,
+                    full_bounds_in_capture_source,
                     capture_vb_left: vb_left,
                     capture_vb_top: vb_top,
                     capture_src_left: src_irect.left,
@@ -3056,6 +3096,23 @@ impl RenderState {
                         let y = (doc_top + translation.1) * scale;
                         canvas.draw_image(crop_image, (x, y), Some(&skia::Paint::default()));
 
+                        canvas.restore();
+                        // Debug: outline the actual blitted image (tile pixels). `src_doc_bounds` is
+                        // in doc space at capture time and does not include drag delta (dx,dy), so
+                        // drawing it would miss the shape you see while dragging.
+                        canvas.save();
+                        canvas.reset_matrix();
+                        let rect = skia::Rect::from_xywh(
+                            x,
+                            y,
+                            crop_image.width() as f32,
+                            crop_image.height() as f32,
+                        );
+                        let mut paint = skia::Paint::default();
+                        paint.set_style(skia::PaintStyle::Stroke);
+                        paint.set_stroke_width(5.0);
+                        paint.set_color(skia::Color::MAGENTA);
+                        canvas.draw_rect(rect, &paint);
                         canvas.restore();
                     }
                     continue;
