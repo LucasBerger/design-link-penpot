@@ -36,6 +36,7 @@
    [app.main.fonts :as fonts]
    [app.main.router :as rt]
    [app.render-wasm.api :as wasm.api]
+   [app.render-wasm.text-editor :as wasm.text-editor]
    [app.util.text-editor :as ted]
    [app.util.text.content.styles :as styles]
    [app.util.timers :as ts]
@@ -465,13 +466,23 @@
       (when-not (some? (get-in state [:workspace-editor-state id]))
         (let [objects   (dsh/lookup-page-objects state)
               shape     (get objects id)
+              wasm?  (features/active-feature? state "render-wasm/v1")
               update-node? (fn [node]
                              (or (txt/is-text-node? node)
                                  (txt/is-paragraph-node? node)))
               shape-ids (cond
                           (cfh/text-shape? shape)  [id]
-                          (cfh/group-shape? shape) (cfh/get-children-ids objects id))]
-          (rx/of (dwsh/update-shapes shape-ids #(txt/update-text-content % update-node? d/txt-merge attrs))))))))
+                          (cfh/group-shape? shape) (cfh/get-children-ids objects id))
+              ;; Keep WASM editor cache in sync with merged :content so a following
+              ;; `apply-styles-to-selection` in `update-attrs` does not read stale
+              ;; `shape-text-contents` and overwrite per-run fills (e.g. line-height).
+              merge-shape
+              (fn [sh]
+                (let [updated-shape (txt/update-text-content sh update-node? d/txt-merge attrs)]
+                  (when wasm?
+                    (wasm.text-editor/cache-shape-text-content! (:id updated-shape) (:content updated-shape)))
+                  updated-shape))]
+          (rx/of (dwsh/update-shapes shape-ids merge-shape)))))))
 
 (defn migrate-node
   [node]
