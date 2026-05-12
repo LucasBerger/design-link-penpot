@@ -3078,20 +3078,21 @@ impl RenderState {
                         canvas.draw_image(crop_image, (x, y), Some(&skia::Paint::default()));
 
                         canvas.restore();
-                        // Debug: draw the crop bounds (doc-space rect) in the same tile-pixel
-                        // coordinate system as the cached blit above.
+                        // Debug: outline the actual blitted image (tile pixels). `src_doc_bounds` is
+                        // in doc space at capture time and does not include drag delta (dx,dy), so
+                        // drawing it would miss the shape you see while dragging.
                         canvas.save();
                         canvas.reset_matrix();
-                        let rect = skia::Rect::from_ltrb(
-                            (crop.src_doc_bounds.left + translation.0) * scale,
-                            (crop.src_doc_bounds.top + translation.1) * scale,
-                            (crop.src_doc_bounds.right + translation.0) * scale,
-                            (crop.src_doc_bounds.bottom + translation.1) * scale,
+                        let rect = skia::Rect::from_xywh(
+                            x,
+                            y,
+                            crop_image.width() as f32,
+                            crop_image.height() as f32,
                         );
                         let mut paint = skia::Paint::default();
                         paint.set_style(skia::PaintStyle::Stroke);
-                        paint.set_stroke_width(1.0);
-                        paint.set_color(skia::Color::RED);
+                        paint.set_stroke_width(5.0);
+                        paint.set_color(skia::Color::MAGENTA);
                         canvas.draw_rect(rect, &paint);
                         canvas.restore();
                     }
