@@ -6,7 +6,7 @@
 
 ### :rocket: Epics and highlights
 
-- WASM renderer: rebuild interactive drag crop snapshots from the tile atlas when shapes sit in the pre-rendered interest ring but outside the viewport backbuffer, with stricter tile coverage checks (`render-wasm`)
+- WASM renderer: rebuild interactive drag crop snapshots from cached tile textures when shapes sit in the pre-rendered interest ring but outside the viewport backbuffer, with tile coverage checks (`render-wasm`)
 - Add "Delete group" option to the assets panel context menu for components, colors and typographies (by @FairyPigDev) [Github #9141](https://github.com/penpot/penpot/issues/9141)
 - Add `Alt+click` on a layer's disclosure arrow to recursively expand the entire subtree in the Layers sidebar (by @MilosM348) [Github #9179](https://github.com/penpot/penpot/pull/9179)
 - Show alpha percentage next to library color values to distinguish colors that differ only in opacity (by @rockchris099) [Github #6328](https://github.com/penpot/penpot/issues/6328)

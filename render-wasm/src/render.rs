@@ -1746,13 +1746,15 @@ impl RenderState {
                         && doc_bounds.right <= viewport.right
                         && doc_bounds.bottom <= viewport.bottom;
                     (img, full)
-                } else if self.surfaces.cached_tiles_cover_doc_rect(src_doc_bounds, scale)
-                    && self.surfaces.atlas_covers_doc_rect(src_doc_bounds)
-                {
-                    let Some(img) = self.surfaces.try_snapshot_doc_rect_from_atlas(
+                } else if self.surfaces.cached_tiles_cover_doc_rect(src_doc_bounds, scale) {
+                    let Some(img) = self.surfaces.try_snapshot_doc_rect_from_tile_cache(
                         src_doc_bounds,
+                        src_irect,
                         src_irect.width(),
                         src_irect.height(),
+                        vb_left,
+                        vb_top,
+                        scale,
                     ) else {
                         continue;
                     };

@@ -988,7 +988,7 @@ impl Surfaces {
     }
 
     /// Returns true when every tile that intersects `doc_rect` has a cached tile texture.
-    /// Used to decide whether an `InteractiveDragCrop` snapshot can be rebuilt from the atlas.
+    /// Used to decide whether an `InteractiveDragCrop` snapshot can be rebuilt from tile images.
     pub fn cached_tiles_cover_doc_rect(&self, doc_rect: skia::Rect, scale: f32) -> bool {
         if doc_rect.is_empty() {
             return false;
@@ -1005,67 +1005,83 @@ impl Surfaces {
         true
     }
 
-    /// Whether the persistent atlas currently allocates pixels for the full `doc_rect`.
-    pub fn atlas_covers_doc_rect(&self, doc_rect: skia::Rect) -> bool {
-        if doc_rect.is_empty() || !self.has_atlas() {
-            return false;
-        }
-        let s = self.atlas_scale.max(0.01);
-        let al = self.atlas_origin.x;
-        let at = self.atlas_origin.y;
-        let ar = al + self.atlas_size.width as f32 / s;
-        let ab = at + self.atlas_size.height as f32 / s;
-        doc_rect.left >= al && doc_rect.top >= at && doc_rect.right <= ar && doc_rect.bottom <= ab
-    }
-
-    /// Rasterizes `src_doc_bounds` from the atlas into a new image of `out_w`×`out_h` pixels,
-    /// resampling as needed. Caller must ensure tiles and atlas already cover `src_doc_bounds`.
-    pub fn try_snapshot_doc_rect_from_atlas(
+    /// Composites `src_doc_bounds` from the per-tile texture cache into a new `out_w`×`out_h`
+    /// image in workspace pixels (same convention as `snapshot_rect` on the backbuffer). Each
+    /// tile image matches the current `scale` (`get_tile_rect` / rasterization zoom); this
+    /// avoids the global `atlas_scale` downsample used by the persistent atlas.
+    ///
+    /// Caller must ensure [`Self::cached_tiles_cover_doc_rect`] is true for `src_doc_bounds`.
+    pub fn try_snapshot_doc_rect_from_tile_cache(
         &mut self,
         src_doc_bounds: skia::Rect,
+        src_irect: IRect,
         out_w: i32,
         out_h: i32,
+        vb_left: f32,
+        vb_top: f32,
+        scale: f32,
     ) -> Option<skia::Image> {
         if out_w <= 0 || out_h <= 0 || src_doc_bounds.is_empty() {
             return None;
         }
-        // Guard against pathological allocations (extrect can be huge off-screen).
         const MAX_DIM: i32 = 8192;
         if out_w > MAX_DIM || out_h > MAX_DIM {
-            return None;
-        }
-        if !self.has_atlas() {
             return None;
         }
 
         let gpu_state = get_gpu_state();
         let mut surface = gpu_state
             .create_surface_with_isize(
-                "drag_crop_atlas_snap".to_string(),
+                "drag_crop_tile_snap".to_string(),
                 skia::ISize::new(out_w, out_h),
             )
             .ok()?;
 
-        let atlas_image = self.atlas.image_snapshot();
-        let a_scale = self.atlas_scale.max(0.01);
-        let sx = (src_doc_bounds.left - self.atlas_origin.x) * a_scale;
-        let sy = (src_doc_bounds.top - self.atlas_origin.y) * a_scale;
-        let sw = src_doc_bounds.width() * a_scale;
-        let sh = src_doc_bounds.height() * a_scale;
-        if sw <= 0.0 || sh <= 0.0 {
-            return None;
-        }
-        let src = skia::Rect::from_xywh(sx, sy, sw, sh);
-        let dst = skia::Rect::from_xywh(0.0, 0.0, out_w as f32, out_h as f32);
-
         let canvas = surface.canvas();
         canvas.clear(skia::Color::TRANSPARENT);
-        canvas.draw_image_rect(
-            &atlas_image,
-            Some((&src, skia::canvas::SrcRectConstraint::Fast)),
-            dst,
-            &skia::Paint::default(),
-        );
+
+        let tile_size = tiles::get_tile_size(scale);
+        let tr = tiles::get_tiles_for_rect(src_doc_bounds, tile_size);
+        let ix0 = src_irect.left as f32;
+        let iy0 = src_irect.top as f32;
+
+        for ty in tr.y1()..=tr.y2() {
+            for tx in tr.x1()..=tr.x2() {
+                let tile = Tile(tx, ty);
+                let tile_doc = tiles::get_tile_rect(tile, scale);
+                let mut clip_doc = tile_doc;
+                if !clip_doc.intersect(src_doc_bounds) || clip_doc.is_empty() {
+                    continue;
+                }
+
+                let tile_image = self.tiles.get(tile)?;
+                let iw = tile_image.width() as f32;
+                let ih = tile_image.height() as f32;
+                let td_w = tile_doc.width().max(1e-6);
+                let td_h = tile_doc.height().max(1e-6);
+
+                let src = skia::Rect::from_ltrb(
+                    ((clip_doc.left - tile_doc.left) / td_w) * iw,
+                    ((clip_doc.top - tile_doc.top) / td_h) * ih,
+                    ((clip_doc.right - tile_doc.left) / td_w) * iw,
+                    ((clip_doc.bottom - tile_doc.top) / td_h) * ih,
+                );
+
+                let dst = skia::Rect::from_ltrb(
+                    (clip_doc.left - vb_left) * scale - ix0,
+                    (clip_doc.top - vb_top) * scale - iy0,
+                    (clip_doc.right - vb_left) * scale - ix0,
+                    (clip_doc.bottom - vb_top) * scale - iy0,
+                );
+
+                canvas.draw_image_rect(
+                    tile_image,
+                    Some((&src, skia::canvas::SrcRectConstraint::Fast)),
+                    dst,
+                    &skia::Paint::default(),
+                );
+            }
+        }
 
         Some(surface.image_snapshot())
     }
