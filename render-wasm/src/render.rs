@@ -3798,6 +3798,10 @@ impl RenderState {
 
     pub fn mark_touched(&mut self, uuid: Uuid) {
         self.touched_ids.insert(uuid);
+        // Drop any preserved backbuffer crop for this shape so `rebuild_backbuffer_crop_cache`
+        // cannot reuse stale GPU pixels after fills/strokes/content change while the shape is
+        // partially outside the viewport.
+        self.backbuffer_crop_cache.remove(&uuid);
     }
 
     #[allow(dead_code)]
