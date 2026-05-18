@@ -84,12 +84,17 @@
   cursor: pointer;
   display: flex;
   align-items: center;
+  text-decoration: none;
+
+  &:hover {
+    text-decoration: none;
+  }
 }
 
 .penpot-logo {
-  fill: var(--color-foreground-primary);
   width: deprecated.$s-48;
   height: deprecated.$s-48;
+  object-fit: contain;
 }
 
 .back-arrow {

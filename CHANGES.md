@@ -8,6 +8,8 @@
 
 ### :sparkles: New features & Enhancements
 
+- Design Link: when a file carries `plugin-data.design-link` (project id + dashboard/API base URLs), the workspace shows a Design Link sidebar (Sandbox / Views / Pages / Nodes), a pending-changes pill in the header, and the back control returns to the linked dashboard preview.
+
 - Show a read-only W × H size badge below the bounding box of the current selection (by @bittoby) [Github #9205](https://github.com/penpot/penpot/issues/9205)
 - Expose `variants` retrieval on `LibraryComponent` via `isVariant()` type guard in plugin API [Github #9185](https://github.com/penpot/penpot/issues/9185)
 

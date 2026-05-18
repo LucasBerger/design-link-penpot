@@ -5425,79 +5425,79 @@ msgstr[1] "%s invitations selected"
 
 #: src/app/main/ui/dashboard/files.cljs:181
 msgid "title.dashboard.files"
-msgstr "%s - Penpot"
+msgstr "%s - DesignLink"
 
 #: src/app/main/ui/dashboard/fonts.cljs:46
 msgid "title.dashboard.font-providers"
-msgstr "Font Providers - %s - Penpot"
+msgstr "Font Providers - %s - DesignLink"
 
 #: src/app/main/ui/dashboard/fonts.cljs:45
 msgid "title.dashboard.fonts"
-msgstr "Fonts - %s - Penpot"
+msgstr "Fonts - %s - DesignLink"
 
 #: src/app/main/ui/dashboard/projects.cljs:357
 msgid "title.dashboard.projects"
-msgstr "Projects - %s - Penpot"
+msgstr "Projects - %s - DesignLink"
 
 #: src/app/main/ui/dashboard/search.cljs:50
 msgid "title.dashboard.search"
-msgstr "Search - %s - Penpot"
+msgstr "Search - %s - DesignLink"
 
 #: src/app/main/ui/dashboard/libraries.cljs:58
 msgid "title.dashboard.shared-libraries"
-msgstr "Shared Libraries - %s - Penpot"
+msgstr "Shared Libraries - %s - DesignLink"
 
 #: src/app/main/ui/auth/verify_token.cljs:70, src/app/main/ui/auth.cljs:34
 msgid "title.default"
-msgstr "Penpot - Design Freedom for Teams"
+msgstr "DesignLink"
 
 #: src/app/main/ui/settings/feedback.cljs:161
 msgid "title.settings.feedback"
-msgstr "Give feedback - Penpot"
+msgstr "Give feedback - DesignLink"
 
 #: src/app/main/ui/settings/integrations.cljs:278
 msgid "title.settings.integrations"
-msgstr "Integrations - Penpot"
+msgstr "Integrations - DesignLink"
 
 #: src/app/main/ui/settings/notifications.cljs:45
 msgid "title.settings.notifications"
-msgstr "Notifications - Penpot"
+msgstr "Notifications - DesignLink"
 
 #: src/app/main/ui/settings/options.cljs:83
 msgid "title.settings.options"
-msgstr "Settings - Penpot"
+msgstr "Settings - DesignLink"
 
 #: src/app/main/ui/settings/password.cljs:105
 msgid "title.settings.password"
-msgstr "Password - Penpot"
+msgstr "Password - DesignLink"
 
 #: src/app/main/ui/settings/profile.cljs:124
 msgid "title.settings.profile"
-msgstr "Profile - Penpot"
+msgstr "Profile - DesignLink"
 
 #: src/app/main/ui/dashboard/team.cljs:981
 msgid "title.team-invitations"
-msgstr "Invitations - %s - Penpot"
+msgstr "Invitations - %s - DesignLink"
 
 #: src/app/main/ui/dashboard/team.cljs:535
 msgid "title.team-members"
-msgstr "Members - %s - Penpot"
+msgstr "Members - %s - DesignLink"
 
 #: src/app/main/ui/dashboard/team.cljs:1296
 msgid "title.team-settings"
-msgstr "Settings - %s - Penpot"
+msgstr "Settings - %s - DesignLink"
 
 #: src/app/main/ui/dashboard/team.cljs:1249
 msgid "title.team-webhooks"
-msgstr "Webhooks - %s - Penpot"
+msgstr "Webhooks - %s - DesignLink"
 
 #: src/app/main/ui/viewer.cljs:423
 msgid "title.viewer"
-msgstr "%s - View mode - Penpot"
+msgstr "%s - View mode - DesignLink"
 
 #: src/app/main/ui/workspace.cljs:237
 msgid "title.workspace"
-msgstr "%s - Penpot"
+msgstr "%s - DesignLink"
 
 #: src/app/main/ui.cljs:138
 #, unused

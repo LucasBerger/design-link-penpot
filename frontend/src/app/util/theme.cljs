@@ -14,7 +14,7 @@
 (defonce ^:private color-scheme-media-query
   (.matchMedia globals/window "(prefers-color-scheme: dark)"))
 
-(def ^:const default "dark")
+(def ^:const default "light")
 
 (defn get-system-theme
   []
@@ -23,12 +23,10 @@
     "light"))
 
 (defn- set-color-scheme
-  [^string color]
-
-  (let [node  (.querySelector js/document "body")
-        class (if (= color "dark") "default" "light")]
+  [^string _color]
+  (let [node (.querySelector js/document "body")]
     (.removeAttribute node "class")
-    (.add ^js (.-classList ^js node) class)))
+    (.add ^js (.-classList ^js node) "light")))
 
 (defn use-initialize
   [{profile-theme :theme}]
@@ -43,8 +41,4 @@
           (rx/dispose! s))))
 
     (mf/with-effect [system-theme profile-theme]
-      (set-color-scheme
-       (cond
-         (= profile-theme "system") system-theme
-         (= profile-theme "default") "dark"
-         :else (d/nilv profile-theme "dark"))))))
+      (set-color-scheme "light"))))

@@ -271,17 +271,27 @@
 
 .sidebar-nav-item {
   cursor: pointer;
+  border-radius: 9999px;
 
   &:hover {
     background-color: var(--sidebar-element-background-color-hover);
+    border-radius: 9999px;
 
     span {
       color: var(--sidebar-element-foreground-color-hover);
     }
   }
 
+  &:focus,
+  &:focus-visible {
+    outline: none;
+    border-radius: 9999px;
+    background-color: var(--sidebar-element-background-color-hover);
+  }
+
   &.current {
     background-color: var(--sidebar-element-background-color-selected);
+    border-radius: 9999px;
 
     .element-title {
       color: var(--sidebar-element-foreground-color-selected);

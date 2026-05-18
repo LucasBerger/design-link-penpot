@@ -6,13 +6,15 @@
 
 @use "ds/_utils.scss" as *;
 
-@keyframes line-pencil {
-  0% {
-    transform: translateY(0);
+@keyframes dl-pulse {
+  0%, 100% {
+    opacity: 1;
+    transform: scale(1);
   }
 
-  100% {
-    transform: translateY(-150px);
+  50% {
+    opacity: 0.6;
+    transform: scale(0.9);
   }
 }
 
@@ -77,11 +79,7 @@
   row-gap: var(--sp-s);
 }
 
-.loader {
-  fill: currentcolor;
-  width: var(--icon-width);
-}
-
-.loader-line {
-  animation: line-pencil 0.8s infinite linear;
+.loader-img {
+  animation: dl-pulse 1.4s ease-in-out infinite;
+  object-fit: contain;
 }

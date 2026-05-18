@@ -171,6 +171,18 @@
 
   &.selected,
   &.selected:hover {
+    position: relative;
+
+    &::before {
+      content: '';
+      position: absolute;
+      left: 0;
+      top: 0;
+      bottom: 0;
+      width: deprecated.$s-2;
+      background-color: var(--layer-row-foreground-color-selected);
+    }
+
     .element-list-body {
       color: var(--layer-row-foreground-color-selected);
       background-color: var(--layer-row-background-color-selected);

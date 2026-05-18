@@ -156,7 +156,9 @@ services:
 
 
   # https://github.com/rroemhild/docker-test-openldap
+  # Image is amd64-only; on ARM64 (Apple Silicon) set platform so Docker runs it under emulation.
   ldap:
+    platform: linux/amd64
     image: rroemhild/test-openldap:2.1
     expose:
       - '10389'

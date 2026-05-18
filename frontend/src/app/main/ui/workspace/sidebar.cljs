@@ -29,6 +29,7 @@
    [app.main.ui.hooks :as hooks]
    [app.main.ui.hooks.resize :refer [use-resize-hook]]
    [app.main.ui.workspace.comments :refer [comments-sidebar*]]
+   [app.main.ui.workspace.design-link :as dl]
    [app.main.ui.workspace.left-header :refer [left-header*]]
    [app.main.ui.workspace.right-header :refer [right-header*]]
    [app.main.ui.workspace.sidebar.assets :refer [assets-toolbox*]]
@@ -129,10 +130,18 @@
         shortcuts?     (contains? layout :shortcuts)
         show-debug?    (contains? layout :debug-panel)
 
-        section        (cond
-                         (or mode-inspect? (contains? layout :layers)) :layers
-                         (contains? layout :assets) :assets
-                         (contains? layout :tokens) :tokens)
+        fdata
+        (mf/deref refs/workspace-data)
+
+        design-link?
+        (and (not ^boolean mode-inspect?)
+             (dl/design-link-file? fdata))
+
+        section
+        (cond
+          (or mode-inspect? (contains? layout :layers)) :layers
+          (contains? layout :assets) :assets
+          (contains? layout :tokens) :tokens)
 
         {on-pointer-down :on-pointer-down
          on-lost-pointer-capture :on-lost-pointer-capture
@@ -202,6 +211,14 @@
 
         (true? show-debug?)
         [:> debug-panel* {:class (stl/css :settings-bar-content)}]
+
+        design-link?
+        [:> dl/design-link-sidebar*
+         {:width width
+          :layout layout
+          :file-id file-id
+          :fdata fdata
+          :tabs-action-button tabs-action-button}]
 
         :else
         [:div {:class (stl/css  :settings-bar-content)}

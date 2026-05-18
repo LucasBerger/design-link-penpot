@@ -1,0 +1,10 @@
+# Penpot is a Git submodule: penpot/.git points at ../.git/modules/penpot (under the
+# parent repo). The devenv only bind-mounts penpot/, so Git must see the parent .git
+# at /home/penpot/.git inside the container. Paths are relative to this compose file.
+#
+# If you use a standalone Penpot clone (normal .git directory inside penpot/), delete
+# this file or comment out the volumes entry below.
+services:
+  main:
+    volumes:
+      - ../../../.git:/home/penpot/.git

@@ -324,7 +324,7 @@
                                       (not page-transition?))
         show-artboard-names?     (and (contains? layout :display-artboard-names) (not page-transition?))
         hide-ui?                 (contains? layout :hide-ui)
-        show-rulers?             (and (contains? layout :rulers) (not hide-ui?))
+        show-rulers?             false
 
 
         disabled-guides?         (or drawing-tool transform path-drawing? path-editing?
@@ -587,12 +587,11 @@
        :on-pointer-up    on-pointer-up}
 
       [:defs
-       ;; This clip is so the handlers are not over the rulers
        [:clipPath {:id "clip-handlers"}
-        [:rect {:x (+ (:x vbox) rule-area-size)
-                :y (+ (:y vbox) rule-area-size)
-                :width (max 0 (- (:width vbox) rule-area-size))
-                :height (max 0 (- (:height vbox) rule-area-size))}]]]
+        [:rect {:x (:x vbox)
+                :y (:y vbox)
+                :width (:width vbox)
+                :height (:height vbox)}]]]
 
       [:g {:style {:pointer-events (if (or disable-events? shapes-loading?) "none" "auto")}}
        ;; Text editor handling:

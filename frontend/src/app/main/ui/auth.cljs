@@ -46,7 +46,8 @@
                     :auth-section true
                     :register is-register)}
      [:h1 {:class (stl/css :logo-container)}
-      [:a {:href "#/" :title "Penpot" :class (stl/css :logo-btn)} deprecated-icon/logo]]
+      [:a {:href "#/" :title "DesignLink" :class (stl/css :logo-btn)}
+       [:img {:src "/images/dl-icon.png" :alt "DesignLink" :style {:width "40px" :height "40px" :object-fit "contain"}}]]]
      [:div {:class (stl/css :login-illustration)}
       [:img {:src "images/registration-illustration.png"}]]
 
