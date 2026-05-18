@@ -25,7 +25,7 @@
   display: grid;
   gap: var(--sp-xxs);
   width: 100%;
-  border-radius: $br-8;
+  border-radius: 9999px;
   padding: var(--sp-xxs);
   background-color: var(--tabs-bg-color);
 }
@@ -46,7 +46,7 @@
 
   // Removing margin bottom from default ul
   margin-block-end: 0;
-  border-radius: $br-8;
+  border-radius: 9999px;
 }
 
 // TAB
@@ -67,7 +67,7 @@
   appearance: none;
   height: $sz-32;
   border: none;
-  border-radius: $br-8;
+  border-radius: 9999px;
   outline: $b-1 solid var(--tabs-item-outline-color);
   display: grid;
   grid-auto-flow: column;
@@ -82,8 +82,8 @@
 
 .selected {
   --tabs-item-bg-color: var(--color-background-quaternary);
-  --tabs-item-fg-color: var(--color-accent-primary);
-  --tabs-item-fg-color-hover: var(--color-accent-primary);
+  --tabs-item-fg-color: var(--color-foreground-primary);
+  --tabs-item-fg-color-hover: var(--color-foreground-primary);
 }
 
 .tab-text {

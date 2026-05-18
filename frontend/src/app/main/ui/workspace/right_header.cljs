@@ -25,6 +25,7 @@
    [app.main.ui.exports.assets :refer [progress-widget]]
    [app.main.ui.formats :as fmt]
    [app.main.ui.icons :as deprecated-icon]
+   [app.main.ui.workspace.design-link :as dl]
    [app.main.ui.workspace.presence :refer [active-sessions*]]
    [app.util.dom :as dom]
    [app.util.i18n :as i18n :refer [tr]]
@@ -123,6 +124,11 @@
         custom-shortcuts  (mf/deref refs/custom-shortcuts)
         get-tt            #(sc/get-effective-tooltip % custom-shortcuts)
 
+        fdata
+        (mf/deref refs/workspace-data)
+
+        design-link?
+        (dl/design-link-file? fdata)
         on-increase       (mf/use-fn #(st/emit! (dw/increase-zoom nil)))
         on-decrease       (mf/use-fn #(st/emit! (dw/decrease-zoom nil)))
         on-zoom-reset     (mf/use-fn #(st/emit! dw/reset-zoom))
@@ -214,6 +220,9 @@
         :on-zoom-reset on-zoom-reset
         :on-zoom-fit on-zoom-fit
         :on-zoom-selected on-zoom-selected}]]
+
+     (when ^boolean design-link?
+       [:> dl/changes-tag* {}])
 
      [:div {:class (stl/css :comments-section)}
       [:button {:title (tr "workspace.toolbar.comments" (get-tt :add-comment))

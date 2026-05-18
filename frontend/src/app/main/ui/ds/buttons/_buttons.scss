@@ -29,7 +29,7 @@
   background: var(--button-bg-color);
   color: var(--button-fg-color);
   border: $b-1 solid var(--button-border-color);
-  border-radius: $br-8;
+  border-radius: 9999px;
 
   &:hover {
     --button-bg-color: var(--button-hover-bg-color);

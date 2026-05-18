@@ -315,7 +315,7 @@
            :data-testid "penpot-logo-link"
            :style {:cursor (when-not (:in-team permissions) "auto")
                    :pointer-events (when-not (:in-team permissions) "none")}}
-       penpot-logo-icon]
+       [:img {:src "/images/dl-icon.png" :alt "DesignLink" :style {:width "32px" :height "32px" :object-fit "contain"}}]]
 
       [:& header-sitemap {:project project
                           :file file

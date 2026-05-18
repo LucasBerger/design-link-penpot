@@ -369,7 +369,7 @@
                               :data-value  default-team-id
                               :class       (stl/css :organization-dropdown-item)}
       [:span {:class (stl/css :my-teams-icon)}
-       [:> raw-svg* {:id penpot-logo-icon-subtle}]]
+       [:img {:src "/images/dl-icon.png" :alt "DesignLink" :style {:width "24px" :height "24px" :object-fit "contain"}}]]
       [:span {:class (stl/css :team-text)
               :title (tr "dashboard.other-teams")}
        (tr "dashboard.other-teams")]
@@ -436,7 +436,7 @@
                               :class       (stl/css-case :team-dropdown-item true
                                                          :team-dropdown-item-no-logo (contains? cf/flags :admin-console))}
       (when-not (contains? cf/flags :admin-console)
-        [:span {:class (stl/css :penpot-icon)} deprecated-icon/logo-icon])
+        [:span {:class (stl/css :penpot-icon)} [:img {:src "/images/dl-icon.png" :alt "DesignLink" :style {:width "24px" :height "24px" :object-fit "contain"}}]])
 
       [:span {:class (stl/css :team-text)} (tr "dashboard.personal-projects")]
       (when (= default-team-id (:id team))
@@ -833,7 +833,7 @@
           (if default-organization?
             [:*
              [:span {:class (stl/css :my-teams-icon-xxxl)}
-              [:> raw-svg* {:id penpot-logo-icon-subtle}]]
+              [:img {:src "/images/dl-icon.png" :alt "DesignLink" :style {:width "24px" :height "24px" :object-fit "contain"}}]]
              [:span {:class (stl/css :team-text)}
               (tr "dashboard.other-teams")]]
             [:*
@@ -881,8 +881,8 @@
                                            :teams organization-teams}]]
       [:div {:class (stl/css :selected-organization)}
        [:span {:class (stl/css :organization-penpot-icon)}
-        [:> raw-svg* {:id penpot-logo-icon}]]
-       "Penpot"
+        [:img {:src "/images/dl-icon.png" :alt "DesignLink" :style {:width "24px" :height "24px" :object-fit "contain"}}]]
+       "DesignLink"
        [:> button* {:variant "ghost"
                     :type "button"
                     :class (stl/css :create-organization)
@@ -971,7 +971,7 @@
          [:div {:class (stl/css-case :team-name true
                                      :team-name-no-logo nitrate?)}
           (when-not nitrate?
-            [:span {:class (stl/css :penpot-icon)} deprecated-icon/logo-icon])
+            [:span {:class (stl/css :penpot-icon)} [:img {:src "/images/dl-icon.png" :alt "DesignLink" :style {:width "24px" :height "24px" :object-fit "contain"}}]])
           [:span {:class (stl/css :team-text)} (tr "dashboard.personal-projects")]]
 
          (and (contains? cf/flags :subscriptions)

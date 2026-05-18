@@ -42,7 +42,7 @@
     "translations": "node ./scripts/translations.js",
     "watch:app:assets": "node ./scripts/watch.js",
     "watch:app:libs": "node ./scripts/build-libs.js --watch",
-    "watch:app:main": "clojure -M:dev:shadow-cljs watch main worker storybook",
+    "watch:app:main": "clojure -M:dev:shadow-cljs watch main worker",
     "clear:shadow-cache": "rm -rf .shadow-cljs",
     "clear:wasm": "cargo clean --manifest-path ../render-wasm/Cargo.toml",
     "watch": "exit 0",

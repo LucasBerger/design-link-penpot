@@ -124,12 +124,18 @@
   cursor: pointer;
   display: flex;
   align-items: center;
+  text-decoration: none;
+
+  &:hover {
+    text-decoration: none;
+  }
 }
 
 .penpot-logo {
   fill: var(--color-foreground-primary);
   inline-size: $sz-48;
   block-size: $sz-48;
+  object-fit: contain;
 }
 
 .back-arrow {

@@ -17,7 +17,7 @@
 (defonce ^:private color-scheme-listeners*
   (atom #{}))
 
-(def ^:const default "dark")
+(def ^:const default "light")
 
 (defn get-system-theme
   []
@@ -38,12 +38,10 @@
   (fn [] (swap! color-scheme-listeners* disj f)))
 
 (defn- set-color-scheme
-  [^string color]
-
-  (let [node  (.querySelector js/document "body")
-        class (if (= color "dark") "default" "light")]
+  [^string _color]
+  (let [node (.querySelector js/document "body")]
     (.removeAttribute node "class")
-    (.add ^js (.-classList ^js node) class)))
+    (.add ^js (.-classList ^js node) "light")))
 
 (defn resolve-theme
   "Resolves the profile's theme setting to the effective UI theme ('dark' or

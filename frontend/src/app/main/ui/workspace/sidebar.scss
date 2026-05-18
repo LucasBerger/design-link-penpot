@@ -104,14 +104,19 @@
 .left-sidebar {
   display: grid;
   grid-template: "header header" px2rem(52) "content resize" 1fr / 1fr 0;
-  position: relative;
-  grid-area: left-sidebar;
+  position: absolute;
+  inset-block: var(--sp-l);
+  inset-inline-start: var(--sp-l);
   min-inline-size: var(--left-sidebar-width);
   max-inline-size: var(--left-sidebar-width-max);
   inline-size: var(--left-sidebar-width);
-  background-color: var(--color-background-primary);
-  block-size: 100vh;
-  max-block-size: 100vh;
+  background-color: rgb(255 255 255 / 0.62);
+  backdrop-filter: blur(12px);
+  border-radius: 20px;
+  overflow: hidden;
+  box-shadow: 0 4px 24px rgb(0 0 0 / 0.12);
+  block-size: calc(100vh - 32px);
+  max-block-size: calc(100vh - 32px);
   z-index: var(--z-index-panels);
 }
 
@@ -147,12 +152,18 @@
 // Component: right-sidebar*
 
 .right-sidebar {
-  grid-area: right-sidebar;
+  position: absolute;
+  inset-block: var(--sp-l);
+  inset-inline-end: var(--sp-l);
   display: grid;
   grid-template-rows: auto minmax(0, 1fr);
-  block-size: 100vh;
+  block-size: calc(100vh - 32px);
   inline-size: var(--right-sidebar-width);
-  background-color: var(--color-background-primary);
+  background-color: rgb(255 255 255 / 0.82);
+  backdrop-filter: blur(12px);
+  border-radius: 20px;
+  overflow: hidden;
+  box-shadow: 0 4px 24px rgb(0 0 0 / 0.12);
   z-index: var(--z-index-panels);
 
   &.not-expand {
@@ -168,7 +179,7 @@
   display: grid;
   grid-template-columns: 100%;
   grid-template-rows: 100%;
-  block-size: calc(100vh - px2rem(52));
+  block-size: calc(100vh - px2rem(84));
   overflow: hidden;
 }
 

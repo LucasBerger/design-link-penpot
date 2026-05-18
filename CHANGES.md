@@ -1,3 +1,9 @@
+## DesignLink (Unreleased)
+
+### :sparkles: New features & Enhancements
+
+- Preserve the customized DesignLink workspace, branding, navigation and agent bridge on Penpot 2.18.3.
+
 # CHANGELOG
 
 ## 2.18.3

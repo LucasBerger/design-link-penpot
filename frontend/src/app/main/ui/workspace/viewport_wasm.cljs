@@ -385,7 +385,7 @@
                                   {:layout layout
                                    :selected-shapes selected-shapes
                                    :base-objects base-objects})
-        show-rulers?             (:show-rulers? rulers-ui)
+        show-rulers?             false
         frame-visible?           (:frame-visible? rulers-ui)
         offset-x                 (:offset-x rulers-ui)
         offset-y                 (:offset-y rulers-ui)
@@ -725,12 +725,11 @@
        :on-pointer-up    on-pointer-up}
 
       [:defs
-       ;; This clip is so the handlers are not over the rulers
        [:clipPath {:id "clip-handlers"}
-        [:rect {:x (+ (:x vbox) rule-area-size)
-                :y (+ (:y vbox) rule-area-size)
-                :width (max 0 (- (:width vbox) rule-area-size))
-                :height (max 0 (- (:height vbox) rule-area-size))}]]]
+        [:rect {:x (:x vbox)
+                :y (:y vbox)
+                :width (:width vbox)
+                :height (:height vbox)}]]]
 
       [:g {:style {:pointer-events (if (or disable-events? shapes-loading?) "none" "auto")}}
        ;; Text editor handling:

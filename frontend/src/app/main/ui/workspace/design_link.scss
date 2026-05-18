@@ -1,0 +1,113 @@
+// Design Link – workspace chrome (fork)
+@use "refactor/common-refactor.scss" as deprecated;
+
+.settingsBarContent {
+  grid-area: content;
+  right: calc(-1 * deprecated.$s-8);
+}
+
+.leftSidebarTabs {
+  --tabs-nav-padding-inline-start: var(--sp-m);
+  --tabs-nav-padding-inline-end: var(--sp-m);
+  --tabs-item-fg-color: var(--color-foreground-secondary);
+  --tabs-item-fg-color-hover: var(--color-foreground-primary);
+}
+
+.changesTag {
+  display: inline-flex;
+  align-items: center;
+  margin-inline-end: deprecated.$s-8;
+  padding: deprecated.$s-4 deprecated.$s-12;
+  border-radius: 9999px;
+  border: 1px solid var(--menu-border-color);
+  background-color: var(--panel-background-color);
+  color: var(--color-foreground-primary);
+  font-size: deprecated.$fs-12;
+  font-weight: 500;
+  cursor: default;
+  user-select: none;
+}
+
+.changesTagCount {
+  color: var(--color-accent-tertiary);
+}
+
+.dlPanel {
+  display: flex;
+  flex-direction: column;
+  gap: deprecated.$s-6;
+  padding: deprecated.$s-8 deprecated.$s-12;
+  overflow: auto;
+  --layer-row-background-color-hover: rgba(0, 0, 0, 0.08);
+  --layer-row-background-color-selected: rgba(0, 0, 0, 0.12);
+}
+
+.dlPageRow {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: deprecated.$s-6 deprecated.$s-8;
+  border-radius: deprecated.$br-8;
+  cursor: pointer;
+  color: var(--color-foreground-secondary);
+
+  &:hover {
+    background-color: var(--layer-row-background-color-hover);
+    color: var(--color-foreground-primary);
+  }
+
+  &.selected {
+    background-color: var(--layer-row-background-color-selected);
+    color: var(--color-foreground-primary);
+    box-shadow: inset deprecated.$s-3 0 0 0 var(--color-accent-primary);
+
+    .dlPageName {
+      color: var(--color-accent-primary);
+      font-weight: 500;
+    }
+  }
+}
+
+.dlPageName {
+  font-size: deprecated.$fs-14;
+  color: var(--color-foreground-primary);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.dlPlaceholder {
+  padding: deprecated.$s-12;
+  font-size: deprecated.$fs-14;
+  color: var(--disabled-foreground-color);
+}
+
+.dlNodesWrap {
+  flex: 1;
+  min-height: 0;
+  overflow: auto;
+  padding-top: deprecated.$s-4;
+  --layer-row-background-color: rgba(255, 255, 255, 0.25);
+  --layer-row-background-color-hover: rgba(0, 0, 0, 0.08);
+  --layer-row-background-color-selected: rgba(0, 0, 0, 0.12);
+  --layer-row-background-color-drag: rgba(0, 0, 0, 0.12);
+  --panel-background-color: rgba(255, 255, 255, 0.25);
+  --color-background-primary: rgba(255, 255, 255, 0.25);
+  --color-background-secondary: rgba(0, 0, 0, 0.07);
+  --color-background-tertiary: rgba(255, 255, 255, 0.20);
+  --color-background-quaternary: rgba(0, 0, 0, 0.10);
+  --search-bar-input-background-color: rgba(255, 255, 255, 0.30);
+  --input-background-color: rgba(255, 255, 255, 0.30);
+  --input-background-color-hover: rgba(0, 0, 0, 0.08);
+  --input-background-color-active: rgba(0, 0, 0, 0.08);
+}
+
+.dlSandboxBtn {
+  @include deprecated.button-style;
+
+  width: 100%;
+  padding: deprecated.$s-8 deprecated.$s-12;
+  border-radius: deprecated.$br-8;
+  cursor: pointer;
+  text-align: center;
+}

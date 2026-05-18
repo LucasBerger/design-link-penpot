@@ -7,6 +7,7 @@
 (ns app.main.ui.workspace.left-header
   (:require-macros [app.main.style :as stl])
   (:require
+   [app.common.data :as d]
    [app.common.data.macros :as dm]
    [app.main.data.common :as dcm]
    [app.main.data.modal :as modal]
@@ -16,6 +17,7 @@
    [app.main.router :as rt]
    [app.main.store :as st]
    [app.main.ui.icons :as deprecated-icon]
+   [app.main.ui.workspace.design-link :as dl]
    [app.main.ui.workspace.main-menu :as main-menu]
    [app.util.dom :as dom]
    [app.util.i18n :as i18n :refer [tr]]
@@ -37,6 +39,9 @@
         ;; Nothing queued to save means the file is up to date.
         persistence-status
         (or (:status persistence) :saved)
+
+        fdata       (mf/deref refs/workspace-data)
+        dl-meta     (dl/design-link-meta-from-fdata fdata)
 
         editing*    (mf/use-state false)
         editing?    (deref editing*)
@@ -71,12 +76,16 @@
 
         go-back
         (mf/use-fn
+         (mf/deps dl-meta close-modals)
          (fn []
            (close-modals)
-           ;; FIXME: move set-mode to uri?
-           (st/emit! :interrupt
-                     (dw/set-options-mode :design)
-                     (dcm/go-to-dashboard-recent))))
+           (if-let [pid (:project-id dl-meta)]
+             (let [base (d/nilv (:dashboard-base-url dl-meta) "http://localhost:3000")]
+               (set! (.-href js/location) (dm/str base "/projects/" pid "/preview")))
+             (do
+               (st/emit! :interrupt
+                         (dw/set-options-mode :design)
+                         (dcm/go-to-dashboard-recent))))))
 
         nav-to-project
         (mf/use-fn
@@ -90,7 +99,8 @@
 
     [:header {:class (dm/str class " " (stl/css :workspace-header-left))}
      [:a {:on-click go-back
-          :class (stl/css :main-icon)} deprecated-icon/logo-icon]
+          :class (stl/css :main-icon)}
+      [:img {:src "/images/dl-icon.png" :alt "DesignLink" :style {:width "32px" :height "32px" :object-fit "contain"}}]]
      [:div {:alt (tr "workspace.sitemap")
             :class (stl/css :project-tree)}
       [:div

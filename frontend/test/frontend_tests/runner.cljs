@@ -93,6 +93,7 @@
    [frontend-tests.util-webapi-test]
    [frontend-tests.util-zip-test]
    [frontend-tests.util.dom.dnd-test]
+   [frontend-tests.workspace-design-link-test]
    [frontend-tests.worker-snap-test]
    [goog.object :as gobj]))
 

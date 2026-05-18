@@ -40,6 +40,8 @@
 ;; FIXME: this is a workaround until we export this class on beicon library
 (def TimeoutError rxjs/TimeoutError)
 
+(def ^:private designlink-url "https://designlink.lucasberger.de")
+
 (mf/defc error-container*
   [{:keys [children]}]
   (let [profile     (mf/deref refs/profile)
@@ -52,26 +54,20 @@
                                     :team-id (:default-team-id profile)))
                          (st/emit! (rt/nav-root)))))]
     [:section {:class (stl/css :exception-layout)}
-     [:button
+     [:a
       {:class (stl/css :exception-header)
-       :on-click on-nav-root}
-      [:> raw-svg* {:id "penpot-logo-icon" :class (stl/css :penpot-logo)}]
-      (when profile-id
-        [:div {:class (stl/css :go-back-wrapper)}
-         [:> icon* {:icon-id i/arrow :class (stl/css :back-arrow)}] [:span (tr "not-found.no-permission.go-dashboard")]])]
-     [:div {:class (stl/css :deco-before)} [:> raw-svg* {:id "logo-error-screen"}]]
+       :href designlink-url}
+      [:img {:src "/images/dl-icon.png" :class (stl/css :penpot-logo) :alt "DesignLink"}]
+      [:div {:class (stl/css :go-back-wrapper)}
+       [:> icon* {:icon-id i/arrow :class (stl/css :back-arrow)}]
+       [:span "Go back to DesignLink"]]]
      (when-not profile-id
        [:button {:class (stl/css :login-header)
                  :on-click on-nav-root}
         (tr "labels.login")])
 
      [:div {:class (stl/css :exception-content)}
-      [:div {:class (stl/css :container)} children]]
-
-     [:div {:class (stl/css :deco-after2)}
-      [:span (tr "labels.copyright-period")]
-      [:> raw-svg* {:id "logo-error-screen"}]
-      [:span (tr "not-found.made-with-love")]]]))
+      [:div {:class (stl/css :container)} children]]]))
 
 (mf/defc invalid-token
   [{:keys [reason]}]

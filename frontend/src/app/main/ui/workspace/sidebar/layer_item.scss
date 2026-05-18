@@ -18,9 +18,11 @@
   display: flex;
   flex-direction: row;
   align-items: center;
-  inline-size: 100%;
+  inline-size: calc(100% - #{px2rem(8)});
+  margin-inline: #{px2rem(4)};
   background-color: var(--layer-background-color);
   border: $b-2 solid transparent;
+  border-radius: 9999px;
   color: var(--layer-foreground-color);
 
   &.highlight,
@@ -96,6 +98,7 @@
   inline-size: calc(100% - (var(--depth) * var(--layer-indentation-size)));
   cursor: pointer;
   min-inline-size: px2rem(140);
+  border-radius: 9999px;
 
   &.filtered {
     inline-size: calc(100% - $sz-12);
