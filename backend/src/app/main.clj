@@ -61,6 +61,26 @@
     ::mdef/help "A total number of bytes processed by update-file."
     ::mdef/type :counter}
 
+   :recompute-file-layout-roots
+   {::mdef/name "penpot_rpc_recompute_file_layout_roots_total"
+    ::mdef/help "Layout roots processed by recompute-file-layout."
+    ::mdef/type :counter}
+
+   :recompute-file-layout-changed
+   {::mdef/name "penpot_rpc_recompute_file_layout_changed_total"
+    ::mdef/help "Shapes changed by recompute-file-layout."
+    ::mdef/type :counter}
+
+   :recompute-file-layout-noop
+   {::mdef/name "penpot_rpc_recompute_file_layout_noop_total"
+    ::mdef/help "No-op recompute-file-layout calls (no geometry diff)."
+    ::mdef/type :counter}
+
+   :recompute-file-layout-applied
+   {::mdef/name "penpot_rpc_recompute_file_layout_applied_total"
+    ::mdef/help "recompute-file-layout calls that persisted changes."
+    ::mdef/type :counter}
+
    :rpc-mutation-timing
    {::mdef/name "penpot_rpc_mutation_timing"
     ::mdef/help "RPC mutation method call timing."

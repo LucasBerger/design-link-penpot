@@ -52,6 +52,7 @@
 (declare update-file-data!)
 (declare persist-file!)
 (declare get-file)
+(declare apply-prepared-changes!)
 
 ;; --- SCHEMA
 
@@ -200,6 +201,23 @@
       (-> (update-file* cfg params)
           (rph/with-defer #(let [elapsed (tpoint)]
                              (l/trace :hint "update-file" :time (ct/format-duration elapsed))))))))
+
+(defn apply-prepared-changes!
+  "Apply a prepared change vector through the standard update-file
+  persistence path (file_change, notifications, revn increment).
+
+  Ensures `::timestamp` is set on cfg (parity with the `update-file`
+  defmethod entry point at line 160), so callers like
+  `recompute-file-layout` don't have to replicate that wiring.
+
+  Returns a map with the persisted `:revn` and `:vern` after the update."
+  [cfg {:keys [file] :as params}]
+  (let [cfg (cond-> cfg
+              (nil? (::timestamp cfg)) (assoc ::timestamp (ct/now)))]
+    (update-file* cfg params)
+    (let [file (get-file cfg (:id file))]
+      {:revn (:revn file)
+       :vern (:vern file)})))
 
 (defn- update-file*
   "Internal function, part of the update-file process, that encapsulates

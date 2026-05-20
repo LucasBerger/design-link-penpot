@@ -13,6 +13,7 @@
    [common-tests.colors-test]
    [common-tests.data-test]
    [common-tests.files-builder-test]
+   [common-tests.file-layout-reflow-test]
    [common-tests.files-changes-test]
    [common-tests.files-migrations-test]
    [common-tests.files.shapes-builder-test]
@@ -94,6 +95,7 @@
    'common-tests.colors-test
    'common-tests.data-test
    #?(:clj 'common-tests.fressian-test)
+   'common-tests.file-layout-reflow-test
    'common-tests.files-changes-test
    'common-tests.files-builder-test
    'common-tests.files-migrations-test
