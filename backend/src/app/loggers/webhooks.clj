@@ -58,7 +58,25 @@
   [{:keys [::db/pool]} {:keys [props] :as event}]
   (or (some->> (:team-id props) (lookup-webhooks-by-team pool))
       (some->> (:project-id props) (lookup-webhooks-by-project pool))
-      (some->> (:file-id props) (lookup-webhooks-by-file pool))))
+      (some->> (or (:file-id props) (:id props)) (lookup-webhooks-by-file pool))))
+
+(defn- event-summary
+  [{:keys [name props profile-id] :as _event}]
+  (d/without-nils
+   {:event-name name
+    :profile-id (some-> profile-id str)
+    :file-id (some-> (or (:file-id props) (:id props)) str)
+    :project-id (some-> (:project-id props) str)
+    :team-id (some-> (:team-id props) str)}))
+
+(defn- webhook-summary
+  [{:keys [id uri mtype is-active error-code error-count]}]
+  {:webhook-id (str id)
+   :uri (str uri)
+   :mtype mtype
+   :is-active is-active
+   :error-code error-code
+   :error-count error-count})
 
 (defmethod ig/assert-key ::process-event-handler
   [_ params]
@@ -68,6 +86,9 @@
 (defmethod ig/init-key ::process-event-handler
   [_ cfg]
   (fn [{:keys [props] :as task}]
+    (l/inf :hint "webhook event received"
+           :event (event-summary props)
+           :task-label (get task ::wrk/label))
 
     (let [items (lookup-webhooks cfg props)
           event {:profile-id (:profile-id props)
@@ -79,16 +100,25 @@
 
       (audit/insert cfg event)
 
-      (when items
-        (l/trc :hint "webhooks found for event" :total (count items))
-        (db/tx-run! cfg (fn [cfg]
-                          (doseq [item items]
-                            (wrk/submit! (-> cfg
-                                             (assoc ::wrk/task :run-webhook)
-                                             (assoc ::wrk/queue :webhooks)
-                                             (assoc ::wrk/max-retries 3)
-                                             (assoc ::wrk/params {:event props
-                                                                  :config item}))))))))))
+      (if (seq items)
+        (do
+          (l/inf :hint "webhooks matched for event"
+                 :total (count items)
+                 :event-name (:name props)
+                 :uris (mapv #(str (:uri %)) items))
+          (db/tx-run! cfg (fn [cfg]
+                            (doseq [item items]
+                              (l/inf :hint "enqueue webhook delivery"
+                                     :event-name (:name props)
+                                     :webhook (webhook-summary item))
+                              (wrk/submit! (-> cfg
+                                               (assoc ::wrk/task :run-webhook)
+                                               (assoc ::wrk/queue :webhooks)
+                                               (assoc ::wrk/max-retries 3)
+                                               (assoc ::wrk/params {:event props
+                                                                    :config item})))))))
+        (l/wrn :hint "no active webhooks matched for event"
+               :event (event-summary props))))))
 ;; --- RUN
 
 (declare interpret-exception)
@@ -118,16 +148,26 @@
                          err
                          (:id whook)]
                     res (db/exec-one! pool sql {::db/return-keys true})]
+                (l/wrn :hint "webhook delivery failed"
+                       :webhook (webhook-summary whook)
+                       :error-code err
+                       :error-count (:error-count res))
                 (when (>= (:error-count res) max-errors)
+                  (l/err :hint "webhook disabled after repeated failures"
+                         :webhook (webhook-summary whook)
+                         :max-errors max-errors)
                   (db/update! pool :webhook
                               {:is-active false}
                               {:id (:id whook)})))
 
-              (db/update! pool :webhook
-                          {:updated-at (ct/now)
-                           :error-code nil
-                           :error-count 0}
-                          {:id (:id whook)})))
+              (do
+                (l/inf :hint "webhook delivery succeeded"
+                       :webhook (webhook-summary whook))
+                (db/update! pool :webhook
+                            {:updated-at (ct/now)
+                             :error-code nil
+                             :error-count 0}
+                            {:id (:id whook)}))))
 
           (report-delivery! [whook req rsp err]
             (db/insert! pool :webhook-delivery
@@ -146,11 +186,10 @@
                     "application/transit+json" (t/encode-str event)
                     "application/x-www-form-urlencoded" (uri/map->query-string event))]
 
-        (l/dbg :hint "run webhook"
-               :event-name (:name event)
-               :webhook-id (str (:id whook))
-               :webhook-uri (:uri whook)
-               :webhook-mtype (:mtype whook))
+        (l/inf :hint "run webhook"
+               :event (event-summary event)
+               :webhook (webhook-summary whook)
+               :body-bytes (count body))
 
         (let [req {:uri (:uri whook)
                    :headers {"content-type" (:mtype whook)
@@ -161,14 +200,29 @@
           (try
             (let [rsp (http/req cfg req {:response-type :input-stream :sync? true})
                   err (interpret-response rsp)]
+              (if err
+                (l/wrn :hint "webhook HTTP response rejected"
+                       :webhook (webhook-summary whook)
+                       :status (:status rsp)
+                       :error-code err)
+                (l/inf :hint "webhook HTTP response ok"
+                       :webhook (webhook-summary whook)
+                       :status (:status rsp)))
               (report-delivery! whook req rsp err)
               (update-webhook! whook err))
             (catch Throwable cause
               (let [err (interpret-exception cause)]
+                (l/wrn :hint "webhook HTTP request failed"
+                       :webhook (webhook-summary whook)
+                       :error-code (or err "unknown")
+                       :cause-class (.. cause getClass getName)
+                       :cause-message (ex-message cause)
+                       :cause-data (ex-data cause))
                 (report-delivery! whook req nil err)
                 (update-webhook! whook err)
-                (when (= err "unknown")
+                (when (nil? err)
                   (l/err :hint "unknown error on webhook request"
+                         :webhook (webhook-summary whook)
                          :cause cause))))))))))
 
 (defn interpret-response
@@ -197,4 +251,9 @@
       (if (and (= :validation (:type data))
                (= :ssrf-blocked-target (:code data)))
         (str "blocked-request:" (:hint data))
-        nil))))
+        (do
+          (l/wrn :hint "unclassified webhook exception"
+                 :cause-class (.. cause getClass getName)
+                 :cause-message (ex-message cause)
+                 :cause-data data)
+          nil)))))

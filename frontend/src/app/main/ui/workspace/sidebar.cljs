@@ -214,7 +214,10 @@
           :layout layout
           :file-id file-id
           :fdata fdata
-          :tabs-action-button tabs-action-button}]
+          :tabs-action-button tabs-action-button
+          :tokens-lib tokens-lib
+          :active-tokens active-tokens
+          :resolved-active-tokens resolved-active-tokens}]
 
         :else
         [:div {:class (stl/css  :left-sidebar-content)}

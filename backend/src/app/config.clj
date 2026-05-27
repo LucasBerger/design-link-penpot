@@ -99,7 +99,10 @@
 
    ;; Binfile import limits
    :binfile-import-max-object-size (* 1024 1024 100) ;; 100 MiB
-   :binfile-import-max-zip-entries (* 500 1000)})    ;; 500,000
+   :binfile-import-max-zip-entries (* 500 1000)   ;; 500,000
+
+   ;; update-file webhook debounce (upstream Penpot default is 2m)
+   :webhook-update-file-batch-timeout (ct/duration "2s")})
 
 (def schema:config
   (do #_sm/optional-keys
@@ -179,6 +182,7 @@
     [:scheduled-executor-parallelism {:optional true} ::sm/int] ;; REVIEW
     [:worker-default-parallelism {:optional true} ::sm/int]
     [:worker-webhook-parallelism {:optional true} ::sm/int]
+    [:webhook-update-file-batch-timeout {:optional true} ::ct/duration]
 
     [:database-password {:optional true} [:maybe :string]]
     [:database-uri {:optional true} ::sm/uri]

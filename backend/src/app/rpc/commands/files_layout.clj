@@ -118,7 +118,7 @@
                 [:update-file/global]]
 
    ::webhooks/event? true
-   ::webhooks/batch-timeout (ct/duration "2m")
+   ::webhooks/batch-timeout (cf/get :webhook-update-file-batch-timeout)
    ::webhooks/batch-key (webhooks/key-fn ::rpc/profile-id :id)
 
    ::sm/params schema:recompute-file-layout
