@@ -89,7 +89,10 @@
 
    ;; SSRF protection
    :ssrf-allowed-hosts #{}
-   :ssrf-extra-blocked-cidrs #{}})
+   :ssrf-extra-blocked-cidrs #{}
+
+   ;; update-file webhook debounce (upstream Penpot default is 2m)
+   :webhook-update-file-batch-timeout (ct/duration "2s")})
 
 (def schema:config
   (do #_sm/optional-keys
@@ -139,6 +142,7 @@
     [:scheduled-executor-parallelism {:optional true} ::sm/int] ;; REVIEW
     [:worker-default-parallelism {:optional true} ::sm/int]
     [:worker-webhook-parallelism {:optional true} ::sm/int]
+    [:webhook-update-file-batch-timeout {:optional true} ::ct/duration]
 
     [:database-password {:optional true} [:maybe :string]]
     [:database-uri {:optional true} ::sm/uri]

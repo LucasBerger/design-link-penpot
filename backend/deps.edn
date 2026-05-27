@@ -104,4 +104,8 @@
               "-Dcom.sun.management.jmxremote.ssl=false"
               "-Djava.rmi.server.hostname=localhost"]}
 
+  :probe-webhook
+  {:extra-paths ["scripts"]
+   :main-opts ["-m" "probe-webhook-uri"]}
+
   }}

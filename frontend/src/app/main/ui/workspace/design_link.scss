@@ -2,7 +2,12 @@
 @use "refactor/common-refactor.scss" as deprecated;
 
 .settingsBarContent {
+  display: flex;
+  flex-direction: column;
   grid-area: content;
+  height: 100%;
+  min-height: 0;
+  overflow: hidden;
   right: calc(-1 * deprecated.$s-8);
 }
 
@@ -11,6 +16,8 @@
   --tabs-nav-padding-inline-end: var(--sp-m);
   --tabs-item-fg-color: var(--color-foreground-secondary);
   --tabs-item-fg-color-hover: var(--color-foreground-primary);
+  flex: 1;
+  min-height: 0;
 }
 
 .changesTag {
@@ -32,19 +39,37 @@
   color: var(--color-accent-tertiary);
 }
 
-.dlPanel {
+.dlAppPanel {
   display: flex;
   flex-direction: column;
-  gap: deprecated.$s-6;
-  padding: deprecated.$s-8 deprecated.$s-12;
-  overflow: auto;
+  gap: deprecated.$s-4;
+  padding-block: deprecated.$s-4;
   --layer-row-background-color-hover: rgba(0, 0, 0, 0.08);
   --layer-row-background-color-selected: rgba(0, 0, 0, 0.12);
+}
+
+.dlSection {
+  display: flex;
+  flex-direction: column;
+  flex-shrink: 0;
+}
+
+.dlSectionTitle {
+  flex-shrink: 0;
+}
+
+.dlSectionBodyInner {
+  display: flex;
+  flex-direction: column;
+  gap: deprecated.$s-2;
+  padding-block: deprecated.$s-4;
+  padding-inline: deprecated.$s-12 deprecated.$s-8;
 }
 
 .dlPageRow {
   display: flex;
   align-items: center;
+  gap: deprecated.$s-8;
   justify-content: space-between;
   padding: deprecated.$s-6 deprecated.$s-8;
   border-radius: deprecated.$br-8;
@@ -76,17 +101,28 @@
   white-space: nowrap;
 }
 
+.dlPageRoute {
+  flex-shrink: 0;
+  font-size: deprecated.$fs-12;
+  color: var(--color-foreground-secondary);
+}
+
 .dlPlaceholder {
-  padding: deprecated.$s-12;
+  padding: deprecated.$s-8 deprecated.$s-12;
   font-size: deprecated.$fs-14;
   color: var(--disabled-foreground-color);
 }
 
 .dlNodesWrap {
-  flex: 1;
-  min-height: 0;
-  overflow: auto;
-  padding-top: deprecated.$s-4;
+  padding-inline: deprecated.$s-4;
+
+  // Scroll the whole sidebar panel, not an isolated nodes sub-region.
+  [data-scroll-container] {
+    overflow: visible;
+    max-height: none;
+    height: auto;
+  }
+
   --layer-row-background-color: rgba(255, 255, 255, 0.25);
   --layer-row-background-color-hover: rgba(0, 0, 0, 0.08);
   --layer-row-background-color-selected: rgba(0, 0, 0, 0.12);
@@ -102,12 +138,14 @@
   --input-background-color-active: rgba(0, 0, 0, 0.08);
 }
 
-.dlSandboxBtn {
-  @include deprecated.button-style;
+.dlDesignSystemPanel {
+  display: flex;
+  flex-direction: column;
+  gap: deprecated.$s-8;
+  padding-block: deprecated.$s-4;
+}
 
-  width: 100%;
-  padding: deprecated.$s-8 deprecated.$s-12;
-  border-radius: deprecated.$br-8;
-  cursor: pointer;
-  text-align: center;
+.dlDesignSystemTokens,
+.dlDesignSystemAssets {
+  flex-shrink: 0;
 }
