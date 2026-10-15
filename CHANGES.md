@@ -2,6 +2,8 @@
 
 ### :sparkles: New features & Enhancements
 
+- Ignore macOS metadata files.
+
 - Preserve the customized DesignLink workspace, branding, navigation and agent bridge on Penpot 2.18.3.
 
 # CHANGELOG
