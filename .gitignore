@@ -1,4 +1,5 @@
 .pnp.*
+.DS_Store
 *-init.clj
 *.css.json
 *.jar
