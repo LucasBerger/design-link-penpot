@@ -313,6 +313,29 @@ pub fn build_paragraphs_from_paragraph_builders(
     paragraphs
 }
 
+fn measure_auto_width(
+    paragraphs: &[Vec<skia::textlayout::Paragraph>],
+    normalized_line_height: f32,
+) -> TextContentSize {
+    let (width, height) =
+        paragraphs
+            .iter()
+            .flatten()
+            .fold((0.0, 0.0), |(auto_width, auto_height), paragraph| {
+                (
+                    f32::max(paragraph.longest_line(), auto_width),
+                    auto_height + paragraph.height(),
+                )
+            });
+
+    TextContentSize::new_with_normalized_line_height(
+        width,
+        height.ceil(),
+        width,
+        normalized_line_height,
+    )
+}
+
 /// Calculate the normalized line height from paragraph builders
 pub fn calculate_normalized_line_height(
     paragraph_builders: &mut [ParagraphBuilderGroup],
@@ -804,23 +827,7 @@ impl TextContent {
         let paragraphs =
             build_paragraphs_from_paragraph_builders(&mut paragraph_builders, f32::MAX);
 
-        let (width, height) =
-            paragraphs
-                .iter()
-                .flatten()
-                .fold((0.0, 0.0), |(auto_width, auto_height), paragraph| {
-                    (
-                        f32::max(paragraph.longest_line(), auto_width),
-                        auto_height + paragraph.height(),
-                    )
-                });
-
-        let size = TextContentSize::new_with_normalized_line_height(
-            width.ceil(),
-            height.ceil(),
-            width.ceil(),
-            normalized_line_height,
-        );
+        let size = measure_auto_width(&paragraphs, normalized_line_height);
         TextContentLayoutResult(paragraph_builders, paragraphs, size)
     }
 
@@ -1191,7 +1198,8 @@ impl Paragraph {
         style.set_text_align(self.text_align);
         style.set_text_direction(self.text_direction);
         style.set_replace_tab_characters(true);
-        style.set_apply_rounding_hack(true);
+        // Skia compatibility rounding floors finite widths and can wrap intrinsic text.
+        style.set_apply_rounding_hack(false);
         style.set_text_height_behavior(skia::textlayout::TextHeightBehavior::All);
         style
     }
@@ -1645,6 +1653,85 @@ pub fn calculate_position_data(
 #[cfg(test)]
 mod tests {
     use super::*;
+
+    #[test]
+    fn auto_width_preserves_fractional_glyph_metrics_across_paragraphs() {
+        let fonts = crate::render::FontStore::try_new().unwrap();
+        let paragraphs: Vec<Vec<skia::textlayout::Paragraph>> =
+            ["Fractional text", "A longer second paragraph", ""]
+                .iter()
+                .map(|text| {
+                    let mut style = skia::textlayout::TextStyle::new();
+                    style.set_font_families(&[default_font()]);
+                    style.set_font_size(14.25);
+                    style.set_letter_spacing(-0.4);
+                    let mut builder =
+                        ParagraphBuilder::new(&ParagraphStyle::new(), fonts.font_collection());
+                    builder.push_style(&style);
+                    builder.add_text(text);
+                    let mut paragraph = builder.build();
+                    paragraph.layout(f32::MAX);
+                    vec![paragraph]
+                })
+                .collect();
+        let expected_width = paragraphs
+            .iter()
+            .flatten()
+            .map(|p| p.longest_line())
+            .fold(0.0_f32, f32::max);
+        let expected_height: f32 = paragraphs.iter().flatten().map(|p| p.height()).sum();
+        assert!((expected_width.ceil() - expected_width).abs() > 0.01);
+        let size = measure_auto_width(&paragraphs, 1.2);
+        assert_eq!(size.width, expected_width);
+        assert_eq!(size.max_width, expected_width);
+        assert_eq!(size.height, expected_height.ceil());
+        assert_eq!(size.normalized_line_height, 1.2);
+    }
+
+    #[test]
+    fn fractional_intrinsic_width_does_not_wrap_when_laid_out_for_paint() {
+        let fonts = crate::render::FontStore::try_new().unwrap();
+        for text in [
+            "Features",
+            "Integrations",
+            "Pricing & Plans",
+            "Fractional text",
+        ] {
+            for font_size in [14.0, 14.25, 17.5] {
+                for spacing in [0.0, -0.4, 0.25] {
+                    for alignment in [TextAlign::Left, TextAlign::Center, TextAlign::Right] {
+                        let paragraph = Paragraph {
+                            text_align: alignment,
+                            ..Paragraph::default()
+                        };
+                        let mut style = skia::textlayout::TextStyle::new();
+                        style.set_font_families(&[default_font()]);
+                        style.set_font_size(font_size);
+                        style.set_letter_spacing(spacing);
+                        let mut builder = ParagraphBuilder::new(
+                            &paragraph.paragraph_to_style(),
+                            fonts.font_collection(),
+                        );
+                        builder.push_style(&style);
+                        builder.add_text(text);
+                        let mut shaped = builder.build();
+                        shaped.layout(f32::MAX);
+                        let width = shaped.longest_line();
+                        let height = shaped.height();
+                        shaped.layout(width);
+                        assert_eq!(shaped.get_line_metrics().len(), 1,
+                            "{text}, size={font_size}, spacing={spacing}, align={alignment:?}, width={width}");
+                        assert_eq!(shaped.height(), height);
+                        shaped.layout(width / 3.0);
+                        assert!(
+                            shaped.get_line_metrics().len() > 1,
+                            "Actual constrained text must still wrap"
+                        );
+                    }
+                }
+            }
+        }
+    }
 
     #[test]
     fn capitalize_basic_words() {

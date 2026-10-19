@@ -498,7 +498,6 @@
 
      (count (:text node)))))
 
-
 (defn decorate-range-info
   "Adds information about ranges inside the metadata of the text nodes"
   [content]
@@ -1227,7 +1226,7 @@
             ;; `get-wasm-text-new-size` has the side effect of syncing WASM's internal text
             ;; content/layout. Only non-fixed grow-types need geometry modifiers updates.
             (if (some? modifiers)
-              (rx/of (dwm/set-wasm-modifiers modifiers))
+              (rx/of (dwm/set-wasm-modifiers modifiers {:ignore-snap-pixel true}))
               (rx/empty))))))
 
     ptk/EffectEvent
@@ -1367,7 +1366,7 @@
               ;; like other transform flows (flex parents, sidebar width, etc.).
               (when (some? new-size)
                 (when-let [modifiers (dwwt/resize-wasm-text-modifiers shape content)]
-                  (dwm/apply-wasm-modifiers modifiers {:undo-group (when new-shape? id)}))))
+                  (dwm/apply-wasm-modifiers modifiers {:ignore-snap-pixel true :undo-group (when new-shape? id)}))))
 
              (when finalize?
                (rx/concat

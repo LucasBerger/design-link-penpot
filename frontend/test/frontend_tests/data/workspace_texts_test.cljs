@@ -16,7 +16,13 @@
    [app.main.data.workspace.texts :as dwt]
    [app.main.ui.workspace.shapes.text.viewport-texts-html :as vth]
    [cljs.test :as t :include-macros true]
-   [frontend-tests.helpers.state :as ths]))
+   [frontend-tests.helpers.state :as ths]
+   [app.main.data.helpers :as dsh]
+   [app.main.data.workspace.modifiers :as dwm]
+   [app.main.data.workspace.undo :as dwu]
+   [app.main.data.workspace.wasm-text :as dwwt]
+   [beicon.v2.core :as rx]
+   [potok.v2.core :as ptk]))
 
 ;; ---------------------------------------------------------------------------
 ;; Helpers
@@ -512,3 +518,59 @@
   (t/testing "a non-root content (e.g. paragraph) is left alone"
     (let [node {:type "paragraph" :children []}]
       (t/is (= node (dwt/ensure-valid-text-content node))))))
+(defn- watch-intrinsic-resize
+  [make-event grow-type]
+  (let [shape (assoc (make-text-shape) :grow-type grow-type)
+        id (:id shape)
+        modifiers {id {:width 55.089 :height 18}}
+        emitted (atom [])
+        state {:workspace-layout #{:snap-pixel-grid}
+               ::dwwt/resize-wasm-text-debounce-ids [id]}
+        apply-modifiers (fn
+                          ([mods] {:operation :apply :modifiers mods :options {}})
+                          ([mods & [opts]] {:operation :apply :modifiers mods :options (or opts {})}))
+        set-modifiers (fn
+                        ([mods] {:operation :preview :modifiers mods :options {}})
+                        ([mods & [opts]] {:operation :preview :modifiers mods :options (or opts {})}))]
+    (with-redefs [dsh/lookup-page-objects (fn ([_] {id shape}) ([_ _] {id shape}) ([_ _ _] {id shape}))
+                  dwwt/resize-wasm-text-modifiers (fn ([_] modifiers) ([_ _] modifiers))
+                  dwwt/get-wasm-text-new-size (fn ([_] {:width 55.089 :height 18}) ([_ _] {:width 55.089 :height 18}))
+                  dwm/apply-wasm-modifiers apply-modifiers
+                  dwm/set-wasm-modifiers set-modifiers
+                  dwu/commit-undo-transaction (fn [undo-id] {:operation :commit :undo-id undo-id})]
+      (->> (ptk/watch (make-event id) state nil)
+           (rx/subs! #(swap! emitted conj %) #(throw %))))
+    @emitted))
+
+(t/deftest intrinsic-text-resize-keeps-measured-fractions-with-pixel-snapping-enabled
+  (doseq [grow-type [:auto-width :auto-height]]
+    (let [events (watch-intrinsic-resize dwwt/resize-wasm-text grow-type)]
+      (t/is (= 1 (count events)))
+      (t/is (= {:ignore-snap-pixel true} (:options (first events))))
+      (t/is (= 55.089 (-> events first :modifiers vals first :width)))))
+  (t/is (empty? (watch-intrinsic-resize dwwt/resize-wasm-text :fixed))))
+
+(t/deftest debounced-intrinsic-resize-preserves-fractions-and-undo-options
+  (doseq [grow-type [:auto-width :auto-height]
+          [group undo-id] [[nil nil] [:group nil] [:group :transaction]]]
+    (let [events (watch-intrinsic-resize
+                  (fn [_] (dwwt/resize-wasm-text-debounce-commit group undo-id))
+                  grow-type)
+          expected (cond-> {:ignore-snap-pixel true}
+                     group (assoc :undo-group group)
+                     undo-id (assoc :undo-transation? false))]
+      (t/is (= expected (:options (first events))))
+      (t/is (= (if undo-id [{:operation :commit :undo-id undo-id}] [])
+               (vec (rest events))))))
+  (t/is (= [{:operation :commit :undo-id :transaction}]
+           (watch-intrinsic-resize
+            (fn [_] (dwwt/resize-wasm-text-debounce-commit :group :transaction)) :fixed))))
+
+(t/deftest intrinsic-editor-preview-keeps-measured-fractions
+  (doseq [grow-type [:auto-width :auto-height]]
+    (let [events (watch-intrinsic-resize
+                  (fn [id] (dwt/v2-sync-wasm-text-layout id {:type "root"})) grow-type)]
+      (t/is (= :preview (:operation (first events))))
+      (t/is (= {:ignore-snap-pixel true} (:options (first events))))))
+  (t/is (empty? (watch-intrinsic-resize
+                 (fn [id] (dwt/v2-sync-wasm-text-layout id {:type "root"})) :fixed))))

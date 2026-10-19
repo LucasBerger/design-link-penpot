@@ -91,7 +91,7 @@
      (watch [_ state _]
        (let [objects (dsh/lookup-page-objects state)
              shape   (get objects id)
-             apply-opts (or opts {})
+             apply-opts (assoc opts :ignore-snap-pixel true)
              resize-stream
              (if (and (some? shape)
                       (cfh/text-shape? shape)
@@ -125,7 +125,7 @@
              ;; When undo-id is present, extend the current undo transaction instead of
              ;; creating a new one, and commit it after the resize (single undo action).
              extend-tx? (some? undo-id)
-             apply-opts (cond-> {}
+             apply-opts (cond-> {:ignore-snap-pixel true}
                           (some? undo-group) (assoc :undo-group undo-group)
                           extend-tx? (assoc :undo-transation? false))]
          (cond
