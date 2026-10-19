@@ -25,6 +25,7 @@
    [app.main.data.helpers :as dsh]
    [app.main.data.workspace :as-alias dw]
    [app.main.data.workspace.colors :as cl]
+   [app.main.data.workspace.design-link :as dl]
    [app.main.data.workspace.grid-layout.editor :as dwge]
    [app.main.data.workspace.modifiers :as dwm]
    [app.main.data.workspace.reflow :as wrf]
@@ -97,6 +98,22 @@
           (= type :grid)
           (-> (ctl/assign-cells objects) ctl/reorder-grid-children))))))
 
+(defn layout-reflow-event
+  "Source files share the importer's intrinsic sizing; WASM remains the renderer."
+  [state page-id modif-tree undo-group]
+  (let [source-file? (some? (dl/file-meta (:workspace-data state)))]
+    (if (and (features/active-feature? state "render-wasm/v1") (not source-file?))
+      (dwm/apply-wasm-modifiers modif-tree
+                                :stack-undo? true
+                                :undo-group undo-group
+                                :ignore-touched true)
+      (dwm/apply-modifiers (cond-> {:page-id page-id
+                                    :modifiers modif-tree
+                                    :stack-undo? true
+                                    :ignore-touched true
+                                    :undo-group undo-group}
+                             source-file? (assoc :ignore-snap-pixel true))))))
+
 ;; Never call this directly but through the data-event `:layout/update`
 ;; Otherwise a lot of cycle dependencies could be generated
 (defn- update-layout-positions
@@ -111,16 +128,7 @@
             update-positions-stream
             (if (d/not-empty? ids)
               (let [modif-tree (dwm/create-modif-tree ids (ctm/reflow-modifiers))]
-                (if (features/active-feature? state "render-wasm/v1")
-                  (rx/of (dwm/apply-wasm-modifiers modif-tree
-                                                   :stack-undo? true
-                                                   :undo-group undo-group
-                                                   :ignore-touched true))
-                  (rx/of (dwm/apply-modifiers {:page-id page-id
-                                               :modifiers modif-tree
-                                               :stack-undo? true
-                                               :ignore-touched true
-                                               :undo-group undo-group}))))
+                (rx/of (layout-reflow-event state page-id modif-tree undo-group))))
               (rx/empty))
 
             ;; The apply events above are dispatched and applied synchronously,

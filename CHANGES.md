@@ -2,6 +2,8 @@
 
 ### :sparkles: New features & Enhancements
 
+- Preserve source-linked intrinsic layout during native reflow.
+
 - Preserve fractional intrinsic text measurements and painting.
 
 - Ignore macOS metadata files.

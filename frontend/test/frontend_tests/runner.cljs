@@ -25,6 +25,7 @@
    [frontend-tests.data.workspace-pages-test]
    [frontend-tests.data.workspace-path-edition-test]
    [frontend-tests.data.workspace-reflow-test]
+   [frontend-tests.data.workspace-shape-layout-test]
    [frontend-tests.data.workspace-shortcuts-test]
    [frontend-tests.data.workspace-texts-test]
    [frontend-tests.data.workspace-thumbnails-test]
@@ -131,6 +132,7 @@
    'frontend-tests.data.workspace-path-edition-test
    'frontend-tests.data.workspace-reflow-test
    'frontend-tests.data.workspace-shortcuts-test
+   'frontend-tests.data.workspace-shape-layout-test
    'frontend-tests.data.workspace-texts-test
    'frontend-tests.data.workspace-thumbnails-test
    'frontend-tests.data.workspace-versions-test
@@ -198,6 +200,7 @@
    'frontend-tests.util-webapi-test
    'frontend-tests.util.dom.dnd-test
    'frontend-tests.util-zip-test
+   'frontend-tests.workspace-design-link-test
    'frontend-tests.worker-snap-test])
 
 (assert (every? find-ns-obj test-namespaces)

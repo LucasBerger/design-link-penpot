@@ -13,6 +13,7 @@
    [app.common.data.macros :as dm]
    [app.main.data.common :as dcm]
    [app.main.data.helpers :as dsh]
+   [app.main.data.workspace.design-link :as dl]
    [app.main.features :as features]
    [app.main.refs :as refs]
    [app.main.store :as st]
@@ -27,23 +28,10 @@
    [goog.object :as gobj]
    [rumext.v2 :as mf]))
 
-(defn- getdl
-  [dl k]
-  (when (map? dl)
-    (let [nk (name k)]
-      (or (get dl k) (get dl nk) (get dl (keyword nk))))))
-
 (defn design-link-meta-from-fdata
   "File `data` blob (e.g. from `refs/workspace-data`). Returns nil if not a Design Link file."
   [fdata]
-  (when (some? fdata)
-    (let [pd (:plugin-data fdata)
-          dl (or (:design-link pd) (get pd "design-link"))]
-      (when-let [pid (getdl dl :project-id)]
-        (when (string? pid)
-          {:project-id pid
-           :dashboard-base-url (d/nilv (getdl dl :dashboard-base-url) "http://localhost:3000")
-           :api-base-url (d/nilv (getdl dl :api-base-url) "http://localhost:3001")})))))
+  (dl/file-meta fdata))
 
 (defn design-link-file?
   [fdata]
@@ -248,11 +236,11 @@
 
      [:div {:class (stl/css :dlDesignSystemAssets)}
       [:> assets-toolbox* {:size (- width 58)
-                            :file-id file-id}]]]))
+                           :file-id file-id}]]]))
 
 (mf/defc design-link-sidebar*
   {::mf/private true}
-  [{:keys [width layout file-id fdata tabs-action-button
+  [{:keys [width file-id fdata tabs-action-button
            tokens-lib active-tokens resolved-active-tokens]}]
   (let [selected-tab* (mf/use-state "dl-app")
         selected-tab   (deref selected-tab*)
