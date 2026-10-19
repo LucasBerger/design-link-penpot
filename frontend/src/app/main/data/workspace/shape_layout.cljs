@@ -101,7 +101,7 @@
 (defn layout-reflow-event
   "Source files share the importer's intrinsic sizing; WASM remains the renderer."
   [state page-id modif-tree undo-group]
-  (let [source-file? (some? (dl/file-meta (:workspace-data state)))]
+  (let [source-file? (some? (dl/file-meta (dsh/lookup-file-data state)))]
     (if (and (features/active-feature? state "render-wasm/v1") (not source-file?))
       (dwm/apply-wasm-modifiers modif-tree
                                 :stack-undo? true

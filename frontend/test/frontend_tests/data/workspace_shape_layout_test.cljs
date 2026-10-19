@@ -15,13 +15,20 @@
                 dwm/apply-modifiers (fn ([] nil) ([options] options))]
     (doseq [metadata [{:design-link {:project-id "project"}}
                       {"design-link" {"project-id" "project"}}]]
-      (let [state {:workspace-data {:plugin-data metadata}}
+      (let [state {:current-file-id :active
+                   :files {:active {:data {:plugin-data metadata}}}}
             event (sut/layout-reflow-event state :page {:shape :reflow} :undo)]
         (t/is (= {:page-id :page :modifiers {:shape :reflow}
                   :stack-undo? true :ignore-touched true :undo-group :undo :ignore-snap-pixel true}
                  event))))
     (t/is (= :wasm (sut/layout-reflow-event {} :page {} :undo)))
-    (t/is (= :wasm (sut/layout-reflow-event {:workspace-data {:plugin-data {:other {}}}} :page {} :undo))))
+    (t/is (= :wasm (sut/layout-reflow-event {:workspace-data {:plugin-data {:other {}}}} :page {} :undo)))
+    (t/is (= :wasm (sut/layout-reflow-event {:workspace-data {:plugin-data {:design-link {:project-id "stale"}}}}
+                                            :page {} :undo)))
+    (t/is (= :wasm (sut/layout-reflow-event {:current-file-id :active
+                                             :files {:active {:data {}}
+                                                     :other {:data {:plugin-data {:design-link {:project-id "other"}}}}}}
+                                            :page {} :undo))))
   (with-redefs [features/active-feature? (constantly false)
                 dwm/apply-modifiers (fn ([] nil) ([options] options))]
     (t/is (= :page (:page-id (sut/layout-reflow-event {} :page {} nil))))))
