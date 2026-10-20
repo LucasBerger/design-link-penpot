@@ -19,3 +19,9 @@
       {:project-id project-id
        :dashboard-base-url (d/nilv (getdl metadata :dashboard-base-url) "http://localhost:3000")
        :api-base-url (d/nilv (getdl metadata :api-base-url) "http://localhost:3001")})))
+
+(defn rotation-editable?
+  "Linked files default to the backend's restricted direct-edit contract."
+  [data]
+  (or (nil? (file-meta data))
+      (= "true" (getdl (getdl (:plugin-data data) :design-link) :rotation-editing))))

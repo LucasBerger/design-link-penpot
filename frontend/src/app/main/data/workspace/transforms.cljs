@@ -32,6 +32,7 @@
    [app.main.data.event :as ev]
    [app.main.data.helpers :as dsh]
    [app.main.data.workspace.collapse :as dwc]
+   [app.main.data.workspace.design-link :as dl]
    [app.main.data.workspace.modifiers :as dwm]
    [app.main.data.workspace.selection :as dws]
    [app.main.data.workspace.shapes :as dwsh]
@@ -361,7 +362,7 @@
 
                    (rx/of
                     (dwm/apply-modifiers)
-                    (finish-transform))))))))))))
+                    (finish-transform)))))))))))))
 
 (defn trigger-bounding-box-cloaking
   "Trigger the bounding box cloaking (with default timer of 1sec)
@@ -487,38 +488,40 @@
   (ptk/reify ::start-rotate
     ptk/UpdateEvent
     (update [_ state]
-      (-> state
-          (assoc-in [:workspace-local :transform] :rotate)))
+      (cond-> state
+        (dl/rotation-editable? (dsh/lookup-file-data state))
+        (assoc-in [:workspace-local :transform] :rotate)))
 
     ptk/WatchEvent
     (watch [_ state stream]
-      (let [stopper         (mse/drag-stopper stream)
-            group           (gsh/shapes->rect shapes)
-            group-center    (grc/rect->center group)
-            initial-angle   (gpt/angle @ms/mouse-position group-center)
+      (when (dl/rotation-editable? (dsh/lookup-file-data state))
+        (let [stopper         (mse/drag-stopper stream)
+              group           (gsh/shapes->rect shapes)
+              group-center    (grc/rect->center group)
+              initial-angle   (gpt/angle @ms/mouse-position group-center)
 
-            calculate-angle
-            (fn [pos mod? shift?]
-              (let [angle (- (gpt/angle pos group-center) initial-angle)
-                    angle (if (neg? angle) (+ 360 angle) angle)
-                    angle (if (= angle 360)
-                            0
-                            angle)
-                    angle (if mod?
-                            (* (mth/floor (/ angle 45)) 45)
-                            angle)
-                    angle (if shift?
-                            (* (mth/floor (/ angle 15)) 15)
-                            angle)]
-                angle))
+              calculate-angle
+              (fn [pos mod? shift?]
+                (let [angle (- (gpt/angle pos group-center) initial-angle)
+                      angle (if (neg? angle) (+ 360 angle) angle)
+                      angle (if (= angle 360)
+                              0
+                              angle)
+                      angle (if mod?
+                              (* (mth/floor (/ angle 45)) 45)
+                              angle)
+                      angle (if shift?
+                              (* (mth/floor (/ angle 15)) 15)
+                              angle)]
+                  angle))
 
-            angle-stream
-            (->> ms/mouse-position
-                 (rx/with-latest-from ms/mouse-position-mod ms/mouse-position-shift)
-                 (rx/map
-                  (fn [[pos mod? shift?]]
-                    (calculate-angle pos mod? shift?)))
-                 (rx/share))]
+              angle-stream
+              (->> ms/mouse-position
+                   (rx/with-latest-from ms/mouse-position-mod ms/mouse-position-shift)
+                   (rx/map
+                    (fn [[pos mod? shift?]]
+                      (calculate-angle pos mod? shift?)))
+                   (rx/share))]
 
         (if (features/active-feature? state "render-wasm/v1")
           (rx/concat
@@ -532,7 +535,7 @@
                  (rx/last)
                  (rx/map #(dwm/apply-wasm-modifiers (rotation-modifiers % shapes group-center)))))
 
-           (rx/of (finish-transform)))
+             (rx/of (finish-transform)))
 
           (let [emit-modifiers
                 (fn [angle] (dwm/set-rotation-modifiers angle shapes group-center))]
@@ -559,28 +562,29 @@
    (ptk/reify ::increase-rotation
      ptk/WatchEvent
      (watch [_ state _]
-       (if (and (features/active-feature? state "render-wasm/v1") (not no-wasm?))
-         (let [objects (dsh/lookup-page-objects state)
+       (when (dl/rotation-editable? (dsh/lookup-file-data state))
+         (if (and (features/active-feature? state "render-wasm/v1") (not no-wasm?))
+           (let [objects (dsh/lookup-page-objects state)
 
-               get-modifier
-               (fn [shape]
-                 (let [delta  (if delta? rotation (- rotation (:rotation shape)))
-                       center (or center (gsh/shape->center shape))]
-                   (ctm/rotation-modifiers shape center delta)))
+                 get-modifier
+                 (fn [shape]
+                   (let [delta  (if delta? rotation (- rotation (:rotation shape)))
+                         center (or center (gsh/shape->center shape))]
+                     (ctm/rotation-modifiers shape center delta)))
 
-               modif-tree
-               (dwm/build-modif-tree ids objects get-modifier)]
+                 modif-tree
+                 (dwm/build-modif-tree ids objects get-modifier)]
 
-           (rx/of (dwm/apply-wasm-modifiers modif-tree :ignore-touched (:ignore-touched options))))
+             (rx/of (dwm/apply-wasm-modifiers modif-tree :ignore-touched (:ignore-touched options))))
 
-         (let [page-id (or (:page-id options)
-                           (:current-page-id state))
-               objects (dsh/lookup-page-objects state page-id)
-               shapes  (->> ids (map #(get objects %)))
-               options (assoc options :page-id page-id)]
-           (rx/concat
-            (rx/of (dwm/set-delta-rotation-modifiers rotation shapes (assoc params :page-id page-id)))
-            (rx/of (dwm/apply-modifiers options)))))))))
+           (let [page-id (or (:page-id options)
+                             (:current-page-id state))
+                 objects (dsh/lookup-page-objects state page-id)
+                 shapes  (->> ids (map #(get objects %)))
+                 options (assoc options :page-id page-id)]
+             (rx/concat
+              (rx/of (dwm/set-delta-rotation-modifiers rotation shapes (assoc params :page-id page-id)))
+              (rx/of (dwm/apply-modifiers options))))))))))
 
 ;; -- Move ----------------------------------------------------------
 

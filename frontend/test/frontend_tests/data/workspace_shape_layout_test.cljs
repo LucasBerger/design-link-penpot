@@ -6,8 +6,28 @@
    [app.main.data.workspace.design-link :as dl]
    [app.main.data.workspace.modifiers :as dwm]
    [app.main.data.workspace.shape-layout :as sut]
+   [app.main.data.workspace.transforms :as transforms]
    [app.main.features :as features]
-   [cljs.test :as t :include-macros true]))
+   [cljs.test :as t :include-macros true]
+   [potok.v2.core :as ptk]))
+
+(t/deftest linked-rotation-contract-is-restricted-and-file-local
+  (doseq [metadata [{:design-link {:project-id "project" :rotation-editing "false"}}
+                    {"design-link" {"project-id" "project" "rotation-editing" "false"}}
+                    {:design-link {:project-id "legacy"}}]]
+    (let [data {:plugin-data metadata}
+          state {:current-file-id :active :files {:active {:data data}}}
+          mouse (transforms/start-rotate [])]
+      (t/is (false? (dl/rotation-editable? data)))
+      (t/is (= state (ptk/update mouse state)))
+      (t/is (nil? (ptk/watch mouse state nil)))
+      (t/is (nil? (ptk/watch (transforms/increase-rotation [] 15) state nil)))))
+  (t/is (true? (dl/rotation-editable? {})))
+  (let [state {:current-file-id :active
+               :files {:active {:data {}}
+                       :other {:data {:plugin-data {:design-link {:project-id "other"}}}}}
+               :workspace-data {:plugin-data {:design-link {:project-id "stale"}}}}]
+    (t/is (= :rotate (get-in (ptk/update (transforms/start-rotate []) state) [:workspace-local :transform])))))
 
 (t/deftest linked-layout-keeps-the-shared-sizing-engine
   (with-redefs [features/active-feature? (constantly true)

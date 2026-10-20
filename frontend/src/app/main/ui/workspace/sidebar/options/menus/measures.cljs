@@ -15,6 +15,7 @@
    [app.common.types.shape.layout :as ctl]
    [app.main.constants :refer [size-presets]]
    [app.main.data.workspace :as udw]
+   [app.main.data.workspace.design-link :as dl]
    [app.main.data.workspace.interactions :as dwi]
    [app.main.data.workspace.shapes :as dwsh]
    [app.main.data.workspace.tokens.application :as dwta]
@@ -181,6 +182,9 @@
   [{:keys [ids values applied-tokens type shapes]}]
   (let [token-numeric-inputs
         (features/use-feature "tokens/numeric-input")
+
+        rotation-editable?
+        (dl/rotation-editable? (mf/deref refs/workspace-data))
 
         all-types
         (mf/with-memo [type shapes]
@@ -403,16 +407,17 @@
 
         on-rotation-change
         (mf/use-fn
-         (mf/deps ids)
+         (mf/deps ids rotation-editable?)
          (fn [value]
-           (if (or (string? value) (number? value))
-             (let [value (fixed-decimal-value value)]
-               (st/emit! (udw/trigger-bounding-box-cloaking ids))
-               (st/emit! (udw/increase-rotation-coalesced ids value)))
-             (st/emit! (udw/trigger-bounding-box-cloaking ids)
-                       (dwta/apply-token-from-input {:token (first value)
-                                                     :attrs #{:rotation}
-                                                     :shape-ids ids})))))
+           (when rotation-editable?
+             (if (or (string? value) (number? value))
+               (let [value (fixed-decimal-value value)]
+                 (st/emit! (udw/trigger-bounding-box-cloaking ids))
+                 (st/emit! (udw/increase-rotation-coalesced ids value)))
+               (st/emit! (udw/trigger-bounding-box-cloaking ids)
+                         (dwta/apply-token-from-input {:token (first value)
+                                                       :attrs #{:rotation}
+                                                       :shape-ids ids}))))))
 
         on-width-change
         (mf/use-fn (mf/deps on-size-change) #(on-size-change % :width))
@@ -653,6 +658,7 @@
           (if token-numeric-inputs
             [:> numeric-input-wrapper*
              {:on-change on-rotation-change
+              :disabled (not rotation-editable?)
               :on-detach on-detach-token
               :icon i/rotation
               :min -359
@@ -670,6 +676,7 @@
              [:span {:class (stl/css :icon)}  deprecated-icon/rotation]
              [:> deprecated-input/numeric-input*
               {:no-validate true
+               :disabled (not rotation-editable?)
                :min -359
                :max 359
                :data-wrap true

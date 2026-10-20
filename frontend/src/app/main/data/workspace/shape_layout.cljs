@@ -128,7 +128,7 @@
             update-positions-stream
             (if (d/not-empty? ids)
               (let [modif-tree (dwm/create-modif-tree ids (ctm/reflow-modifiers))]
-                (rx/of (layout-reflow-event state page-id modif-tree undo-group))))
+                (rx/of (layout-reflow-event state page-id modif-tree undo-group)))
               (rx/empty))
 
             ;; The apply events above are dispatched and applied synchronously,
