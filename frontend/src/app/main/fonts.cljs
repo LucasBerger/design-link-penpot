@@ -432,6 +432,14 @@
   (let [props (keys variant-data)]
     (d/seek #(= (select-keys % props) variant-data) variants)))
 
+(defn find-custom-variant
+  [variants font-id font-weight font-style]
+  (let [style (if (= font-style "regular") "normal" (or font-style "normal"))]
+    (d/seek #(and (= (:font-id %) font-id)
+                  (= (str (:font-weight %)) (str font-weight))
+                  (= (or (:font-style %) "normal") style))
+            variants)))
+
 (defn find-closest-variant
   "Find the closest font weight variant in `font` for `target-weight` with optional `target-style` match.
   When exactly between two weights, choose the higher one."

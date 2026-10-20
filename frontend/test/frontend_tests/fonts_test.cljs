@@ -74,6 +74,20 @@
      :ttf-url "sourcesanspro-blackitalic.ttf"}]
    :backend :builtin})
 
+(t/deftest find-custom-variant-test
+  (let [italic {:font-id :family :font-weight 400 :font-style "italic" :ttf-file-id :italic}
+        regular {:font-id :family :font-weight "400" :font-style "normal" :ttf-file-id :regular}
+        bold {:font-id :family :font-weight 700 :font-style "normal" :ttf-file-id :bold}
+        other {:font-id :other-family :font-weight 400 :font-style "normal" :ttf-file-id :other}
+        variants [italic other bold regular]]
+    (t/is (= regular (fonts/find-custom-variant variants :family 400 "normal")))
+    (t/is (= italic (fonts/find-custom-variant (reverse variants) :family "400" "italic")))
+    (t/is (= bold (fonts/find-custom-variant variants :family "700" "normal")))
+    (t/is (= regular (fonts/find-custom-variant variants :family 400 "regular")))
+    (t/is (= regular (fonts/find-custom-variant variants :family 400 nil)))
+    (t/is (nil? (fonts/find-custom-variant variants :family 700 "italic")))
+    (t/is (nil? (fonts/find-custom-variant variants :missing 400 "normal")))))
+
 (t/deftest find-closest-weight-variant-test
   (t/testing "finds exact weight match"
     (let [result (fonts/find-closest-variant sample-font "400" nil)]

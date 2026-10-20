@@ -124,12 +124,7 @@
     font-id
     :custom
     (let [font-uuid (custom-font-id->uuid font-id)
-          matching-font (some (fn [[_ font]]
-                                (and (= (:font-id font) font-uuid)
-                                     (= (str (:font-weight font)) (str font-weight))
-                                     (= (:font-style font) font-style)
-                                     font))
-                              (seq @custom-fonts))]
+          matching-font (fonts/find-custom-variant (vals @custom-fonts) font-uuid font-weight font-style)]
       (when matching-font
         (:ttf-file-id matching-font)))
     :builtin
