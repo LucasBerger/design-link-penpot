@@ -21,7 +21,9 @@
    [app.main.data.comments :as dc]
    [app.main.data.event :as ev]
    [app.main.data.helpers :as dsh]
+   [app.main.data.notifications :as ntf]
    [app.main.data.workspace.collapse :as dwco]
+   [app.main.data.workspace.design-link :as dl]
    [app.main.data.workspace.edition :as dwe]
    [app.main.data.workspace.reflow :as wrf]
    [app.main.data.workspace.reflow.signals :as wrfs]
@@ -352,25 +354,27 @@
        (let [file-id       (:current-file-id state)
              page-id       (or page-id (:current-page-id state))
 
-             fdata         (dsh/lookup-file-data state file-id)
-             page          (dsh/get-page fdata page-id)
-             objects       (:objects page)
-             deleted-ids   (into #{} (mapcat #(cfh/get-children-ids-with-self objects %)) ids)
+             fdata         (dsh/lookup-file-data state file-id)]
+         (if-not (dl/structural-editable? fdata)
+           (rx/of (ntf/warn "Deleting elements is unavailable in source-linked files. You can edit their style, size and layout."))
+           (let [page          (dsh/get-page fdata page-id)
+                 objects       (:objects page)
+                 deleted-ids   (into #{} (mapcat #(cfh/get-children-ids-with-self objects %)) ids)
 
-             undo-id (or (:undo-id options) (js/Symbol))
-             [all-parents changes]
-             (-> (pcb/empty-changes it (:id page))
-                 (cls/generate-delete-shapes fdata page objects ids
-                                             {:ignore-touched (:allow-altering-copies options)
-                                              :undo-group (:undo-group options)
-                                              :undo-id undo-id}))]
+                 undo-id (or (:undo-id options) (js/Symbol))
+                 [all-parents changes]
+                 (-> (pcb/empty-changes it (:id page))
+                     (cls/generate-delete-shapes fdata page objects ids
+                                                 {:ignore-touched (:allow-altering-copies options)
+                                                  :undo-group (:undo-group options)
+                                                  :undo-id undo-id}))]
 
-         (wrf/cancel-shapes! deleted-ids)
-         (rx/of (dwu/start-undo-transaction undo-id)
-                (dc/detach-comment-thread ids)
-                (dch/commit-changes changes)
-                (ptk/data-event :layout/update {:ids all-parents :undo-group (:undo-group options)})
-                (dwu/commit-undo-transaction undo-id)))))))
+             (wrf/cancel-shapes! deleted-ids)
+             (rx/of (dwu/start-undo-transaction undo-id)
+                    (dc/detach-comment-thread ids)
+                    (dch/commit-changes changes)
+                    (ptk/data-event :layout/update {:ids all-parents :undo-group (:undo-group options)})
+                    (dwu/commit-undo-transaction undo-id)))))))))
 
 (defn create-and-add-shape
   ([type frame-x frame-y attrs]

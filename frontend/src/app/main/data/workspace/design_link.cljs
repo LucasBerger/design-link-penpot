@@ -25,3 +25,9 @@
   [data]
   (or (nil? (file-meta data))
       (= "true" (getdl (getdl (:plugin-data data) :design-link) :rotation-editing))))
+
+(defn structural-editable?
+  "Structural editing is deferred for linked files, including older imports."
+  [data]
+  (or (nil? (file-meta data))
+      (= "true" (getdl (getdl (:plugin-data data) :design-link) :structural-editing))))
