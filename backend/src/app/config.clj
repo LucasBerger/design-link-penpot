@@ -102,7 +102,7 @@
    :binfile-import-max-zip-entries (* 500 1000)   ;; 500,000
 
    ;; update-file webhook debounce (upstream Penpot default is 2m)
-   :webhook-update-file-batch-timeout (ct/duration "2s")})
+   :webhook-update-file-batch-timeout (ct/duration "0s")})
 
 (def schema:config
   (do #_sm/optional-keys

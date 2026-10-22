@@ -19,7 +19,9 @@
    [integrant.core :as ig]
    [promesa.exec :as px])
   (:import
-   java.lang.AutoCloseable))
+   java.lang.AutoCloseable
+   java.sql.Connection
+   org.postgresql.PGConnection))
 
 (set! *warn-on-reflection* true)
 
@@ -170,10 +172,28 @@ RETURNING task.id, task.queue")
             (l/inf :hint "started")
             (try
               (loop []
-                (let [result (run-batch)]
-                  (when (= result ::wait)
-                    (px/sleep (::wait-duration cfg)))
-                  (recur)))
+                (when (Thread/interrupted)
+                  (throw (InterruptedException.)))
+                (try
+                  (with-open [^Connection listener (db/open pool)]
+                    ;; Subscribe before scanning so a commit between the scan
+                    ;; and the blocking wait cannot lose its wakeup.
+                    (db/exec-one! listener ["LISTEN penpot_worker"])
+                    (let [^PGConnection pg (db/unwrap listener PGConnection)]
+                      (loop []
+                        (when (Thread/interrupted)
+                          (throw (InterruptedException.)))
+                        (when (= (run-batch) ::wait)
+                          ;; Timeout also finds delayed/retry tasks and repairs
+                          ;; lost Redis deliveries. Ready tasks wake immediately.
+                          (.getNotifications pg (int (.toMillis ^java.time.Duration (::wait-duration cfg)))))
+                        (recur))))
+                  (catch InterruptedException cause
+                    (throw cause))
+                  (catch Exception cause
+                    (l/wrn :hint "dispatcher listener failed; reconnecting" :cause cause)
+                    (px/sleep timeout)))
+                (recur))
               (catch InterruptedException _
                 (l/trc :hint "interrupted"))
               (catch Throwable cause

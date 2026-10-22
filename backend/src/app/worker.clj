@@ -138,6 +138,10 @@
                         label priority max-retries
                         now now scheduled-at])
 
+    ;; PostgreSQL delivers this only after the caller's transaction commits.
+    ;; The task row remains authoritative if no dispatcher is listening.
+    (db/exec-one! conn ["SELECT pg_notify('penpot_worker', ?)" tenant])
+
     id))
 
 (defn invoke!
