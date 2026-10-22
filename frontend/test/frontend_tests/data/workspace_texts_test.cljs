@@ -13,15 +13,15 @@
    [app.common.types.shape :as cts]
    [app.common.types.text :as txt]
    [app.common.uuid :as uuid]
-   [app.main.data.workspace.texts :as dwt]
-   [app.main.ui.workspace.shapes.text.viewport-texts-html :as vth]
-   [cljs.test :as t :include-macros true]
-   [frontend-tests.helpers.state :as ths]
    [app.main.data.helpers :as dsh]
    [app.main.data.workspace.modifiers :as dwm]
+   [app.main.data.workspace.texts :as dwt]
    [app.main.data.workspace.undo :as dwu]
    [app.main.data.workspace.wasm-text :as dwwt]
+   [app.main.ui.workspace.shapes.text.viewport-texts-html :as vth]
    [beicon.v2.core :as rx]
+   [cljs.test :as t :include-macros true]
+   [frontend-tests.helpers.state :as ths]
    [potok.v2.core :as ptk]))
 
 ;; ---------------------------------------------------------------------------

@@ -301,7 +301,6 @@
                    (:y first-shape)
                    (:y selected-frame))
 
-        rule-area-size (/ rulers/ruler-area-size zoom)
 
         add-variant
         (mf/use-fn

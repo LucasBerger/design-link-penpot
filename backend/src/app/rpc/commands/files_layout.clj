@@ -8,15 +8,14 @@
   (:require
    [app.common.exceptions :as ex]
    [app.common.features :as cfeat]
-   [app.common.logic.file-layout-reflow :as flr]
    [app.common.logging :as l]
+   [app.common.logic.file-layout-reflow :as flr]
    [app.common.schema :as sm]
    [app.common.time :as ct]
    [app.common.types.pages-list :as ctpl]
    [app.config :as cf]
    [app.db :as db]
    [app.features.fdata :as fdata]
-   [app.util.blob :as blob]
    [app.http.errors :as errors]
    [app.loggers.webhooks :as webhooks]
    [app.metrics :as mtx]
@@ -27,6 +26,7 @@
    [app.rpc.commands.teams :as teams]
    [app.rpc.doc :as-alias doc]
    [app.rpc.helpers :as rph]
+   [app.util.blob :as blob]
    [app.util.services :as sv]
    [clojure.set :as set]))
 
@@ -57,7 +57,7 @@
 
 (defn- recompute-file-layout*
   [{:keys [::mtx/metrics] :as cfg}
-   {:keys [profile-id file team features session-id skip-validate
+   {:keys [file skip-validate
            page-id root-ids] :as params}]
 
   (let [file-id   (:id file)
@@ -82,7 +82,7 @@
       (ex/raise :type :validation
                 :code :reflow-too-many-changes
                 :hint (str "Layout reflow would change too many shapes (max "
-                          flr/default-max-changed-shapes ").")
+                           flr/default-max-changed-shapes ").")
                 :context {:changed-count changed-count}))
 
     (mtx/run! metrics {:id :recompute-file-layout-roots :inc root-count})
@@ -126,8 +126,8 @@
    ::doc/module :files
    ::doc/added "2.17"
    ::db/transaction true}
-  [{:keys [::mtx/metrics ::db/conn] :as cfg}
-   {:keys [::rpc/profile-id id session-id] :as params}]
+  [{:keys [::db/conn] :as cfg}
+   {:keys [::rpc/profile-id id] :as params}]
 
   (files/check-edition-permissions! conn profile-id id)
   (db/xact-lock! conn id)

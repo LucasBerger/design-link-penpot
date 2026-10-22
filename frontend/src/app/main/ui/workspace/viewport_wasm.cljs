@@ -431,7 +431,6 @@
              (= (:layout selected-frame) :flex)
              (zero? (:rotation first-shape)))
 
-        rule-area-size (/ rulers/ruler-area-size zoom)
         preview-blend (-> refs/workspace-preview-blend
                           (mf/deref))
         shapes-loading? (mf/deref wasm.api/shapes-loading?)

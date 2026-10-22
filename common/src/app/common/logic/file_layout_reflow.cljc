@@ -176,7 +176,7 @@
   - :changes       — vector of change maps (redo only)
   - :changed-count — number of :mod-obj changes
   - :noop?         — true when no geometry diff"
-  [page objects {:keys [root-ids page-id]}]
+  [_page objects {:keys [root-ids page-id]}]
   (let [root-ids (resolve-reflow-roots objects {:root-ids root-ids})]
     (if (empty? root-ids)
       {:changes [] :changed-count 0 :noop? true :root-count 0}

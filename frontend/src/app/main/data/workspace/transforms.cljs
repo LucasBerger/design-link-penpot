@@ -362,7 +362,7 @@
 
                    (rx/of
                     (dwm/apply-modifiers)
-                    (finish-transform)))))))))))))
+                    (finish-transform))))))))))))
 
 (defn trigger-bounding-box-cloaking
   "Trigger the bounding box cloaking (with default timer of 1sec)
@@ -523,36 +523,36 @@
                       (calculate-angle pos mod? shift?)))
                    (rx/share))]
 
-        (if (features/active-feature? state "render-wasm/v1")
-          (rx/concat
-           (rx/merge
-            (->> angle-stream
-                 (rx/sample mconst/rotation-sample-time)
-                 (rx/map #(dwm/set-wasm-modifiers (rotation-modifiers % shapes group-center)))
-                 (rx/take-until stopper))
-            (->> angle-stream
-                 (rx/take-until stopper)
-                 (rx/last)
-                 (rx/map #(dwm/apply-wasm-modifiers (rotation-modifiers % shapes group-center)))))
-
-             (rx/of (finish-transform)))
-
-          (let [emit-modifiers
-                (fn [angle] (dwm/set-rotation-modifiers angle shapes group-center))]
-            ;; Throttle the live preview to limit re-renders; the trailing
-            ;; rx/last applies the exact final frame.
+          (if (features/active-feature? state "render-wasm/v1")
             (rx/concat
              (rx/merge
               (->> angle-stream
                    (rx/sample mconst/rotation-sample-time)
-                   (rx/map emit-modifiers)
+                   (rx/map #(dwm/set-wasm-modifiers (rotation-modifiers % shapes group-center)))
                    (rx/take-until stopper))
               (->> angle-stream
                    (rx/take-until stopper)
                    (rx/last)
-                   (rx/map emit-modifiers)))
-             (rx/of (dwm/apply-modifiers)
-                    (finish-transform)))))))))
+                   (rx/map #(dwm/apply-wasm-modifiers (rotation-modifiers % shapes group-center)))))
+
+             (rx/of (finish-transform)))
+
+            (let [emit-modifiers
+                  (fn [angle] (dwm/set-rotation-modifiers angle shapes group-center))]
+              ;; Throttle the live preview to limit re-renders; the trailing
+              ;; rx/last applies the exact final frame.
+              (rx/concat
+               (rx/merge
+                (->> angle-stream
+                     (rx/sample mconst/rotation-sample-time)
+                     (rx/map emit-modifiers)
+                     (rx/take-until stopper))
+                (->> angle-stream
+                     (rx/take-until stopper)
+                     (rx/last)
+                     (rx/map emit-modifiers)))
+               (rx/of (dwm/apply-modifiers)
+                      (finish-transform))))))))))
 
 (defn increase-rotation
   "Rotate shapes a fixed angle, from a keyboard action."

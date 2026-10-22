@@ -10,7 +10,6 @@
    [app.main.style :as stl])
   (:require
    [app.common.data :as d]
-   [app.common.math :as mth]
    [app.util.i18n :as i18n :refer [tr]]
    [beicon.v2.core :as rx]
    [rumext.v2 :as mf]))

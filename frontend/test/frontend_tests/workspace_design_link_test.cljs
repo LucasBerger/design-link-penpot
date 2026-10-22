@@ -11,8 +11,8 @@
   (t/is (nil? (sut/design-link-meta-from-fdata nil)))
   (t/is (nil? (sut/design-link-meta-from-fdata {})))
   (let [fdata {:plugin-data {:design-link {"project-id" "p1"
-                                            "dashboard-base-url" "https://dash.example"
-                                            "api-base-url" "https://api.example"}}}]
+                                           "dashboard-base-url" "https://dash.example"
+                                           "api-base-url" "https://api.example"}}}]
     (t/is (= {:project-id "p1"
               :dashboard-base-url "https://dash.example"
               :api-base-url "https://api.example"}

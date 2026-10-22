@@ -261,8 +261,6 @@
        [:span {:class (stl/css :frame-name)} frame-name]
        [:span {:class (stl/css :icon)} deprecated-icon/arrow]]]]))
 
-(def ^:private penpot-logo-icon
-  (deprecated-icon/icon-xref :penpot-logo-icon (stl/css :logo-icon)))
 
 
 (mf/defc header

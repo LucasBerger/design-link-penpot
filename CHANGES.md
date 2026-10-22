@@ -2,6 +2,8 @@
 
 ### :sparkles: New features & Enhancements
 
+- Rebase customizations onto 2.18.3, adapting redesigned sidebars, reflow tracking and font handling. Initialize empty flex-line accumulators explicitly for JVM layout parity. Remove obsolete development Compose overrides and the accidental npm lockfile; builds use upstream pnpm locks.
+
 - Preserve source-linked rotation/deletion guards and custom font style matching.
 
 - Preserve source-linked intrinsic layout during native reflow.

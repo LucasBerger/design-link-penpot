@@ -16,6 +16,7 @@
   --tabs-nav-padding-inline-end: var(--sp-m);
   --tabs-item-fg-color: var(--color-foreground-secondary);
   --tabs-item-fg-color-hover: var(--color-foreground-primary);
+
   flex: 1;
   min-height: 0;
 }
@@ -44,8 +45,9 @@
   flex-direction: column;
   gap: deprecated.$s-4;
   padding-block: deprecated.$s-4;
-  --layer-row-background-color-hover: rgba(0, 0, 0, 0.08);
-  --layer-row-background-color-selected: rgba(0, 0, 0, 0.12);
+
+  --layer-row-background-color-hover: rgb(0 0 0 / 0.08);
+  --layer-row-background-color-selected: rgb(0 0 0 / 0.12);
 }
 
 .dlSection {
@@ -123,19 +125,19 @@
     height: auto;
   }
 
-  --layer-row-background-color: rgba(255, 255, 255, 0.25);
-  --layer-row-background-color-hover: rgba(0, 0, 0, 0.08);
-  --layer-row-background-color-selected: rgba(0, 0, 0, 0.12);
-  --layer-row-background-color-drag: rgba(0, 0, 0, 0.12);
-  --panel-background-color: rgba(255, 255, 255, 0.25);
-  --color-background-primary: rgba(255, 255, 255, 0.25);
-  --color-background-secondary: rgba(0, 0, 0, 0.07);
-  --color-background-tertiary: rgba(255, 255, 255, 0.20);
-  --color-background-quaternary: rgba(0, 0, 0, 0.10);
-  --search-bar-input-background-color: rgba(255, 255, 255, 0.30);
-  --input-background-color: rgba(255, 255, 255, 0.30);
-  --input-background-color-hover: rgba(0, 0, 0, 0.08);
-  --input-background-color-active: rgba(0, 0, 0, 0.08);
+  --layer-row-background-color: rgb(255 255 255 / 0.25);
+  --layer-row-background-color-hover: rgb(0 0 0 / 0.08);
+  --layer-row-background-color-selected: rgb(0 0 0 / 0.12);
+  --layer-row-background-color-drag: rgb(0 0 0 / 0.12);
+  --panel-background-color: rgb(255 255 255 / 0.25);
+  --color-background-primary: rgb(255 255 255 / 0.25);
+  --color-background-secondary: rgb(0 0 0 / 0.07);
+  --color-background-tertiary: rgb(255 255 255 / 0.2);
+  --color-background-quaternary: rgb(0 0 0 / 0.1);
+  --search-bar-input-background-color: rgb(255 255 255 / 0.3);
+  --input-background-color: rgb(255 255 255 / 0.3);
+  --input-background-color-hover: rgb(0 0 0 / 0.08);
+  --input-background-color-active: rgb(0 0 0 / 0.08);
 }
 
 .dlDesignSystemPanel {

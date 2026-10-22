@@ -28,7 +28,7 @@
                  page-id (assoc :page-id page-id)
                  root-ids (assoc :root-ids root-ids))
         out (th/command! params)]
-  ;; (th/print-result! out)
+    ;; (th/print-result! out)
     (t/is (nil? (:error out)) (:error out))
     (:result out)))
 

@@ -39,7 +39,6 @@
    [app.main.ui.dashboard.team-form]
    [app.main.ui.ds.buttons.button :refer [button*]]
    [app.main.ui.ds.foundations.assets.icon :refer [icon*] :as i]
-   [app.main.ui.ds.foundations.assets.raw-svg :refer [raw-svg*]]
    [app.main.ui.hooks :as hooks :refer [use-focus-timer-ref]]
    [app.main.ui.icons :as deprecated-icon]
    [app.main.ui.nitrate.nitrate-form]
@@ -61,9 +60,6 @@
 
 (def ^:private tick-icon
   (deprecated-icon/icon-xref :tick (stl/css :tick-icon)))
-
-(def ^:private logo-icon
-  (deprecated-icon/icon-xref :logo (stl/css :logo-icon)))
 
 (def ^:private add-icon
   (deprecated-icon/icon-xref :add (stl/css :add-icon)))
@@ -92,8 +88,6 @@
 (def ^:private arrow-up-right-icon
   (deprecated-icon/icon-xref :arrow-up-right (stl/css :arrow-up-right-icon)))
 
-(def ^:private ^:svg-id penpot-logo-icon "penpot-logo-icon")
-(def ^:private ^:svg-id penpot-logo-icon-subtle "penpot-logo-subtle")
 
 (defn schedule-focus-by-id!
   [ref element-id]

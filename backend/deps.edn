@@ -105,6 +105,4 @@
 
   :probe-webhook
   {:extra-paths ["scripts"]
-   :main-opts ["-m" "probe-webhook-uri"]}
-
-  }}
+   :main-opts ["-m" "probe-webhook-uri"]}}}

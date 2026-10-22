@@ -58,15 +58,15 @@
       (t/is (= 2 (count roots)))
       (t/is (= roots (vec (sort-by str roots)))))
 
-  (t/testing "targeted scope uses provided root-ids"
-    (let [file (-> (thf/sample-file :file1)
-                   (add-flex-frame :f1)
-                   (add-flex-frame :f2))
-          page (thf/current-page file)
-          objects (:objects page)
-          f1-id (thi/id :f1)
-          roots (flr/resolve-reflow-roots objects {:root-ids [f1-id]})]
-      (t/is (= [f1-id] roots))))))
+    (t/testing "targeted scope uses provided root-ids"
+      (let [file (-> (thf/sample-file :file1)
+                     (add-flex-frame :f1)
+                     (add-flex-frame :f2))
+            page (thf/current-page file)
+            objects (:objects page)
+            f1-id (thi/id :f1)
+            roots (flr/resolve-reflow-roots objects {:root-ids [f1-id]})]
+        (t/is (= [f1-id] roots))))))
 
 (t/deftest compute-reflow-changes-flex-test
   (t/testing "reflow produces mod-obj changes for flex children"
@@ -145,13 +145,14 @@
       (t/is (pos? changed-count)))))
 
 (t/deftest reflow-modifiers-parity-smoke-test
-  (t/testing "reflow-modifiers entry matches set-objects-modifiers pipeline"
-    (let [file (-> (thf/sample-file :file1)
-                   (add-flex-frame :frame1)
-                   (add-rect-child :rect1 :frame1))
-          objects (:objects (thf/current-page file))
-          frame-id (thi/id :frame1)
-          modif-tree (flr/create-modif-tree [frame-id])
-          result (gm/set-objects-modifiers modif-tree objects)]
-      (t/is (contains? result frame-id))
-      (t/is (ctl/flex-layout? objects frame-id)))))
+  (t/testing "first flex child has numeric accumulators on JVM and JavaScript"
+    (doseq [justify [:start :space-around :space-evenly]]
+      (let [file (-> (thf/sample-file :file1)
+                     (add-flex-frame :frame1 :layout-justify-content justify)
+                     (add-rect-child :rect1 :frame1))
+            objects (:objects (thf/current-page file))
+            frame-id (thi/id :frame1)
+            modif-tree (flr/create-modif-tree [frame-id])
+            result (gm/set-objects-modifiers modif-tree objects)]
+        (t/is (contains? result frame-id))
+        (t/is (ctl/flex-layout? objects frame-id))))))
