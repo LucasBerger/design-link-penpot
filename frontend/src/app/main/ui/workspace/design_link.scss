@@ -152,15 +152,17 @@
   flex-shrink: 0;
 }
 
+/* Anchor the details to the sidebar, whose overflow clips the header. */
 .writeback {
-  position: relative;
+  position: static;
 }
 
 .writebackDetails {
   position: absolute;
   inset-inline-end: 0;
   z-index: 10;
-  width: 20rem;
+  width: 100%;
+  box-sizing: border-box;
   max-height: 50vh;
   overflow: auto;
   overflow-wrap: anywhere;
