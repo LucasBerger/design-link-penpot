@@ -222,7 +222,10 @@
         :on-zoom-selected on-zoom-selected}]]
 
      (when ^boolean design-link?
-       [:> dl/changes-tag* {}])
+       [:*
+        [:> dl/writeback-tag* {:key (:project-id (dl/design-link-meta-from-fdata fdata))
+                             :meta (dl/design-link-meta-from-fdata fdata)}]
+        [:> dl/changes-tag* {}]])
 
      [:div {:class (stl/css :comments-section)}
       [:button {:title (tr "workspace.toolbar.comments" (get-tt :add-comment))

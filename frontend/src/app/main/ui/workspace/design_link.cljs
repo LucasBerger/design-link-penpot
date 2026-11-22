@@ -93,6 +93,51 @@
       (dm/str "Nodes (" (page-route page) ")")
       "Nodes")))
 
+(mf/defc writeback-tag*
+  [{:keys [meta]}]
+  (let [{:keys [project-id api-base-url]} meta
+        outcome* (mf/use-state nil)
+        open* (mf/use-state false)]
+    (mf/with-effect [project-id api-base-url]
+      (let [controller (js/AbortController.)
+            signal (.-signal controller)
+            poll (fn poll []
+                   (-> (js/fetch (str api-base-url "/api/projects/" project-id "/webhooks")
+                                 #js {:signal signal :cache "no-store"})
+                       (.then (fn [response]
+                                (when (.-ok response) (.json response))))
+                       (.then (fn [res]
+                                (when (and res (not (.-aborted signal)))
+                                  (reset! outcome* (js->clj (gobj/get res "writeback") :keywordize-keys true)))))
+                       (.catch (fn [_] nil))
+                       (.finally (fn []
+                                   (when-not (.-aborted signal)
+                                     (js/setTimeout #(when-not (.-aborted signal) (poll)) 2000))))))]
+        (poll)
+        (fn [] (.abort controller))))
+    (when-let [{:keys [status issues]} @outcome*]
+      [:div {:class (stl/css :writeback)
+             :on-mouse-enter #(reset! open* true)
+             :on-mouse-leave #(when-not (.contains (.-currentTarget %) js/document.activeElement)
+                                (reset! open* false))
+             :on-focus #(reset! open* true)
+             :on-blur #(when-not (.contains (.-currentTarget %) (.-relatedTarget %))
+                         (reset! open* false))}
+       [:button {:class (stl/css :changesTag)
+                 :on-click #(reset! open* true)
+                 :aria-expanded @open*}
+        (if (= status "blocked") "Source update blocked" "Preview refresh pending")]
+       (when (and @open* (seq issues))
+         [:div {:class (stl/css :writebackDetails)}
+          (for [[index issue] (map-indexed vector issues)]
+            [:div {:key index}
+             [:strong (:component issue)]
+             [:p (:message issue)]
+             (when (:pageId issue)
+               [:button {:on-click #(st/emit! (dcm/go-to-workspace :file-id (uuid (:fileId issue))
+                                                                  :page-id (uuid (:pageId issue))))}
+                (str "Open example " (:example issue))])])])])))
+
 (mf/defc changes-tag*
   {::mf/private true}
   []

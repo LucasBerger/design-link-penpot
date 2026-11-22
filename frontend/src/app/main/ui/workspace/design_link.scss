@@ -151,3 +151,21 @@
 .dlDesignSystemAssets {
   flex-shrink: 0;
 }
+
+.writeback {
+  position: relative;
+}
+
+.writebackDetails {
+  position: absolute;
+  inset-inline-end: 0;
+  z-index: 10;
+  width: 20rem;
+  max-height: 50vh;
+  overflow: auto;
+  overflow-wrap: anywhere;
+  padding: var(--sp-m);
+  background: var(--panel-background-color);
+  color: var(--color-foreground-primary);
+  border: 1px solid var(--menu-border-color);
+}
