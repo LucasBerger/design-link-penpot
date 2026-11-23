@@ -155,19 +155,34 @@
 /* Anchor the details to the sidebar, whose overflow clips the header. */
 .writeback {
   position: static;
+
+  > button {
+    cursor: pointer;
+  }
 }
 
 .writebackDetails {
-  position: absolute;
+  @extend %menu-dropdown;
+
   inset-inline-end: 0;
-  z-index: 10;
   width: 100%;
   box-sizing: border-box;
   max-height: 50vh;
   overflow: auto;
   overflow-wrap: anywhere;
   padding: var(--sp-m);
-  background: var(--panel-background-color);
-  color: var(--color-foreground-primary);
-  border: 1px solid var(--menu-border-color);
+  gap: var(--sp-m);
+
+  p {
+    margin-block: var(--sp-xs) var(--sp-s);
+    color: var(--color-foreground-secondary);
+  }
+
+  button {
+    @extend %button-secondary;
+    @include deprecated.body-small-typography;
+
+    min-height: var(--sp-xxl);
+    padding-inline: var(--sp-m);
+  }
 }
