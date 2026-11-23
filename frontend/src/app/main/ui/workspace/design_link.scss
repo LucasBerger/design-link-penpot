@@ -151,3 +151,53 @@
 .dlDesignSystemAssets {
   flex-shrink: 0;
 }
+
+/* Anchor the details to the sidebar, whose overflow clips the header. */
+.writeback {
+  position: static;
+
+  > button {
+    position: relative;
+    cursor: pointer;
+  }
+
+  /* Keep the space between the trigger and the menu inside its hover target. */
+  > button[aria-expanded="true"]::after {
+    content: "";
+    position: absolute;
+    inset-inline: 0;
+    inset-block-start: 100%;
+    height: var(--sp-s);
+  }
+}
+
+.writebackDetails {
+  @extend %menu-dropdown;
+
+  inset-inline: var(--sp-s);
+  margin-block-start: var(--sp-s);
+  box-sizing: border-box;
+  max-height: 50vh;
+  overflow: auto;
+  overflow-wrap: anywhere;
+  padding: var(--sp-l);
+  gap: var(--sp-m);
+
+  > :not(:first-child) {
+    padding-block-start: var(--sp-m);
+    border-block-start: 1px solid var(--panel-border-color);
+  }
+
+  p {
+    margin-block: var(--sp-s) var(--sp-l);
+    color: var(--color-foreground-secondary);
+  }
+
+  button {
+    @extend %button-secondary;
+    @include deprecated.body-small-typography;
+
+    min-height: var(--sp-xxxl);
+    padding-inline: var(--sp-m);
+  }
+}
