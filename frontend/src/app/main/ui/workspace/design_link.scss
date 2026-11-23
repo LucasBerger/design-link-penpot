@@ -183,7 +183,7 @@
   padding: var(--sp-l);
   gap: var(--sp-m);
 
-  > div + div {
+  > :not(:first-child) {
     padding-block-start: var(--sp-m);
     border-block-start: 1px solid var(--panel-border-color);
   }
