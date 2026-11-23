@@ -157,24 +157,39 @@
   position: static;
 
   > button {
+    position: relative;
     cursor: pointer;
+  }
+
+  /* Keep the space between the trigger and the menu inside its hover target. */
+  > button[aria-expanded="true"]::after {
+    content: "";
+    position: absolute;
+    inset-inline: 0;
+    inset-block-start: 100%;
+    height: var(--sp-s);
   }
 }
 
 .writebackDetails {
   @extend %menu-dropdown;
 
-  inset-inline-end: 0;
-  width: 100%;
+  inset-inline: var(--sp-s);
+  margin-block-start: var(--sp-s);
   box-sizing: border-box;
   max-height: 50vh;
   overflow: auto;
   overflow-wrap: anywhere;
-  padding: var(--sp-m);
+  padding: var(--sp-l);
   gap: var(--sp-m);
 
+  > div + div {
+    padding-block-start: var(--sp-m);
+    border-block-start: 1px solid var(--panel-border-color);
+  }
+
   p {
-    margin-block: var(--sp-xs) var(--sp-s);
+    margin-block: var(--sp-s) var(--sp-l);
     color: var(--color-foreground-secondary);
   }
 
@@ -182,7 +197,7 @@
     @extend %button-secondary;
     @include deprecated.body-small-typography;
 
-    min-height: var(--sp-xxl);
+    min-height: var(--sp-xxxl);
     padding-inline: var(--sp-m);
   }
 }
